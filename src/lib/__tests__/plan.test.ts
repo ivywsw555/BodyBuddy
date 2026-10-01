@@ -11,8 +11,8 @@ function ids(m: Member, t = m.startDate) {
 }
 
 describe('buildSessions', () => {
-  it('骨量低：每套都有冲击和背伸/核心，没有禁做动作和大重量', () => {
-    const later = '2027-06-01'; // 第三阶段
+  it('low bone density: every workout starts with impact, no banned or heavy moves', () => {
+    const later = '2027-06-01'; // phase 3
     const sessions = buildSessions(hubby, later);
     for (const s of sessions) {
       expect(s.items[0].exerciseId).toMatch(/heel_drop|pogo_jump|rope_jumping/);
@@ -24,20 +24,20 @@ describe('buildSessions', () => {
     expect(all.every((id) => EXERCISE_MAP[id].tier <= 2)).toBe(true);
   });
 
-  it('获得医生许可后第三阶段开放大重量', () => {
+  it('doctor clearance unlocks heavy moves in phase 3', () => {
     const cleared = { ...hubby, level: 'intermediate' as const, cautions: { ...hubby.cautions, cleared: true } };
     const all = ids(cleared, '2027-06-01');
     expect(all).toContain('barbell_squat');
     expect(all).toContain('jump_squat');
   });
 
-  it('在家只用有的器械', () => {
+  it('home plans only use available equipment', () => {
     const home = { ...ivy, equipment: [] };
     const all = ids(home);
     expect(all.every((id) => EXERCISE_MAP[id].equip.length === 0)).toBe(true);
   });
 
-  it('肩颈酸痛：每套都含颈部和肩胛训练', () => {
+  it('neck/shoulder aches: every workout has neck, shoulder-blade and cardio work', () => {
     for (const s of buildSessions(ivy, ivy.startDate)) {
       const patterns = s.items.map((i) => EXERCISE_MAP[i.exerciseId].pattern);
       expect(patterns).toContain('neck');
@@ -46,7 +46,7 @@ describe('buildSessions', () => {
     }
   });
 
-  it('手动替换的动作生效', () => {
+  it('manual swaps are applied', () => {
     const sessions = buildSessions(ivy, ivy.startDate);
     const item = sessions[0].items.find((i) => i.candidates.length > 1)!;
     const other = item.candidates.find((c) => c !== item.exerciseId)!;
@@ -54,7 +54,7 @@ describe('buildSessions', () => {
     expect(buildSessions(swapped, ivy.startDate)[0].items.find((i) => i.slot === item.slot)!.exerciseId).toBe(other);
   });
 
-  it('阶段按周数推进', () => {
+  it('phases advance by week', () => {
     const m = { ...ivy, startDate: '2026-01-05' };
     expect(currentPhase(m, '2026-01-20')).toBe(1);
     expect(currentPhase(m, '2026-02-10')).toBe(2);

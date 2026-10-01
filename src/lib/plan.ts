@@ -14,46 +14,46 @@ export const ALL_EQUIPMENT: Equipment[] = [
 ];
 
 export const EQUIPMENT_NAMES: Record<Equipment, string> = {
-  dumbbell: '哑铃',
-  band: '弹力带',
-  barbell: '杠铃+深蹲架',
-  bench: '卧推凳',
-  pullupbar: '单杠',
-  cable: '龙门架/绳索',
-  machine: '器械（腿举、罗马椅等）',
-  jumprope: '跳绳',
+  dumbbell: 'Dumbbells',
+  band: 'Resistance band',
+  barbell: 'Barbell + rack',
+  bench: 'Bench',
+  pullupbar: 'Pull-up bar',
+  cable: 'Cable machine',
+  machine: 'Machines (leg press, back extension…)',
+  jumprope: 'Jump rope',
 };
 
 export const GOAL_NAMES: Record<Goal, string> = {
-  bone: '提升骨密度',
-  muscle: '全身增肌',
-  posture: '肩颈背改善',
-  fitness: '体能/免疫力',
+  bone: 'Bone density',
+  muscle: 'Build muscle',
+  posture: 'Neck, shoulder & back',
+  fitness: 'Fitness & immunity',
 };
 
 export const PATTERN_NAMES: Record<Pattern, string> = {
-  squat: '深蹲',
-  hinge: '髋铰链',
-  lunge: '单腿/弓步',
-  push_h: '水平推',
-  push_v: '垂直推',
-  pull_h: '水平拉',
-  pull_v: '垂直拉',
-  impact: '冲击训练',
-  back_ext: '背伸肌',
-  core: '核心',
-  carry: '负重行走',
-  balance: '平衡',
-  neck: '颈部',
-  scap: '肩胛稳定',
-  tspine: '胸椎活动',
-  conditioning: '有氧体能',
+  squat: 'Squat',
+  hinge: 'Hinge',
+  lunge: 'Single leg / lunge',
+  push_h: 'Horizontal push',
+  push_v: 'Vertical push',
+  pull_h: 'Horizontal pull',
+  pull_v: 'Vertical pull',
+  impact: 'Impact',
+  back_ext: 'Back extensors',
+  core: 'Core',
+  carry: 'Loaded carry',
+  balance: 'Balance',
+  neck: 'Neck',
+  scap: 'Shoulder blades',
+  tspine: 'Upper-back mobility',
+  conditioning: 'Cardio',
 };
 
 export const PHASE_INFO: Record<Phase, { name: string; desc: string }> = {
-  1: { name: '第一阶段 · 适应期', desc: '第 1-4 周：学动作、轻重量，建立习惯' },
-  2: { name: '第二阶段 · 渐进加载', desc: '第 5-12 周：逐步加重，每周比上周多一点' },
-  3: { name: '第三阶段 · 强化期', desc: '第 13 周起：大重量低次数 + 冲击训练（骨量低者需医生许可）' },
+  1: { name: 'Phase 1 · Foundation', desc: 'Weeks 1–4: learn the moves with light weights and build the habit' },
+  2: { name: 'Phase 2 · Progressive loading', desc: 'Weeks 5–12: add a little weight each week' },
+  3: { name: 'Phase 3 · Strength', desc: 'Week 13 on: heavy, low-rep lifting plus impact work (low bone density needs doctor clearance)' },
 };
 
 export function availableEquipment(m: Member): Set<Equipment> {
@@ -68,7 +68,7 @@ export function currentPhase(m: Member, todayStr: string): Phase {
   return 3;
 }
 
-/** 骨量低且没有医生许可时，大重量（tier 3）和高冲击（impact 3）不开放 */
+/** With low bone density and no doctor clearance, heavy (tier 3) and high-impact moves stay locked */
 function tierCap(m: Member, phase: Phase): number {
   const fragile = m.cautions.spineFragile || m.cautions.hipFragile;
   let cap: number = phase;
@@ -86,7 +86,7 @@ export function hasEquipment(ex: Exercise, m: Member): boolean {
   return ex.equip.every((e) => eq.has(e));
 }
 
-/** 某个动作模式下，此人能做的全部动作（从易到难） */
+/** Every exercise this person can do for a pattern (easiest to hardest) */
 export function candidatesFor(pattern: Pattern, m: Member): Exercise[] {
   return EXERCISES.filter((e) => e.pattern === pattern && hasEquipment(e, m) && !isAvoided(e, m));
 }
@@ -111,26 +111,26 @@ export function templatesFor(m: Member): Template[] {
   switch (primary) {
     case 'bone':
       base = [
-        { key: 'A', title: '训练 A · 骨骼加载（下蹲+推举）', focus: '冲击 + 轴向负荷 + 背伸肌', slots: ['impact', 'squat', 'push_v', 'pull_h', 'back_ext', 'core', 'balance'] },
-        { key: 'B', title: '训练 B · 骨骼加载（硬拉+负重）', focus: '冲击 + 髋部负荷 + 负重行走', slots: ['impact', 'hinge', 'lunge', 'push_h', 'pull_v', 'carry', 'core'] },
+        { key: 'A', title: 'Workout A · Bone loading (squat + press)', focus: 'Impact + axial loading + back extensors', slots: ['impact', 'squat', 'push_v', 'pull_h', 'back_ext', 'core', 'balance'] },
+        { key: 'B', title: 'Workout B · Bone loading (hinge + carry)', focus: 'Impact + hip loading + loaded carry', slots: ['impact', 'hinge', 'lunge', 'push_h', 'pull_v', 'carry', 'core'] },
       ];
       break;
     case 'muscle':
       base = [
-        { key: 'A', title: '训练 A · 全身（深蹲日）', focus: '下肢 + 胸背', slots: ['squat', 'push_h', 'pull_h', 'lunge', 'core'] },
-        { key: 'B', title: '训练 B · 全身（硬拉日）', focus: '后链 + 肩背', slots: ['hinge', 'push_v', 'pull_v', 'balance', 'core'] },
+        { key: 'A', title: 'Workout A · Full body (squat day)', focus: 'Legs + chest and back', slots: ['squat', 'push_h', 'pull_h', 'lunge', 'core'] },
+        { key: 'B', title: 'Workout B · Full body (hinge day)', focus: 'Posterior chain + shoulders and back', slots: ['hinge', 'push_v', 'pull_v', 'balance', 'core'] },
       ];
       break;
     case 'posture':
       base = [
-        { key: 'A', title: '训练 A · 肩颈修复', focus: '颈深屈肌 + 肩胛稳定', slots: ['neck', 'tspine', 'scap', 'scap', 'pull_h', 'core'] },
-        { key: 'B', title: '训练 B · 背部强化', focus: '背伸肌 + 肩袖', slots: ['neck', 'tspine', 'scap', 'pull_v', 'back_ext', 'core'] },
+        { key: 'A', title: 'Workout A · Neck & shoulder rehab', focus: 'Deep neck flexors + shoulder-blade control', slots: ['neck', 'tspine', 'scap', 'scap', 'pull_h', 'core'] },
+        { key: 'B', title: 'Workout B · Back strength', focus: 'Back extensors + rotator cuff', slots: ['neck', 'tspine', 'scap', 'pull_v', 'back_ext', 'core'] },
       ];
       break;
     default:
       base = [
-        { key: 'A', title: '训练 A · 体能循环', focus: '全身 + 心肺', slots: ['squat', 'push_h', 'pull_h', 'conditioning', 'core'] },
-        { key: 'B', title: '训练 B · 体能循环', focus: '全身 + 心肺', slots: ['lunge', 'push_v', 'pull_v', 'conditioning', 'core'] },
+        { key: 'A', title: 'Workout A · Fitness circuit', focus: 'Full body + cardio', slots: ['squat', 'push_h', 'pull_h', 'conditioning', 'core'] },
+        { key: 'B', title: 'Workout B · Fitness circuit', focus: 'Full body + cardio', slots: ['lunge', 'push_v', 'pull_v', 'conditioning', 'core'] },
       ];
   }
   return base.map((t) => {
@@ -140,7 +140,7 @@ export function templatesFor(m: Member): Template[] {
       if (!slots.includes('back_ext')) slots.push('back_ext');
     }
     if (primary !== 'posture' && (m.goals.includes('posture') || m.cautions.neckShoulderPain)) {
-      // 肩颈问题：作为热身放在前面
+      // neck/shoulder issues: put these first as a warm-up
       if (!slots.includes('neck')) slots.unshift('neck');
       if (!slots.includes('scap')) slots.splice(1, 0, 'scap');
     }
@@ -161,42 +161,42 @@ export function dose(
   const p = ex.pattern;
   const boneFirst = primaryGoal(m.goals) === 'bone';
   if (p === 'impact') {
-    if (ex.unit === 'sec') return { sets: [3, 4, 5][phase - 1], reps: '30秒', restSec: 60 };
+    if (ex.unit === 'sec') return { sets: [3, 4, 5][phase - 1], reps: '30 s', restSec: 60 };
     return {
       sets: [3, 4, 5][phase - 1],
-      reps: '10次',
+      reps: '10 reps',
       restSec: 60,
-      note: '冲击训练放在最开始、精力最好的时候做',
+      note: 'Do impact work first, while you’re fresh',
     };
   }
   if (STRENGTH.includes(p)) {
-    const perSide = p === 'lunge' || ex.id === 'db_row' ? '（每侧）' : '';
+    const perSide = p === 'lunge' || ex.id === 'db_row' ? ' each side' : '';
     if (boneFirst) {
       const s = [
-        { sets: 2, reps: `10-12次${perSide}`, restSec: 90, note: 'RPE 6：做完还能再做 4 次，专心学动作' },
-        { sets: 3, reps: `8次${perSide}`, restSec: 120, note: 'RPE 7-8：每周尝试加一点重量' },
-        { sets: 5, reps: `5次${perSide}`, restSec: 180, note: '约 80-85% 最大重量，参考 LIFTMOR 研究方案' },
+        { sets: 2, reps: `10-12 reps${perSide}`, restSec: 90, note: 'RPE 6: you could do 4 more reps. Focus on form' },
+        { sets: 3, reps: `8 reps${perSide}`, restSec: 120, note: 'RPE 7-8: try adding a little weight each week' },
+        { sets: 5, reps: `5 reps${perSide}`, restSec: 180, note: 'About 80-85% of max, following the LIFTMOR study protocol' },
       ][phase - 1];
       return s;
     }
     return [
-      { sets: 2, reps: `12-15次${perSide}`, restSec: 60, note: '轻重量熟悉动作' },
-      { sets: 3, reps: `10-12次${perSide}`, restSec: 90, note: '最后 2 次要有点吃力' },
-      { sets: 4, reps: `8-10次${perSide}`, restSec: 120, note: '逐步加重' },
+      { sets: 2, reps: `12-15 reps${perSide}`, restSec: 60, note: 'Light weight while you learn the move' },
+      { sets: 3, reps: `10-12 reps${perSide}`, restSec: 90, note: 'The last 2 reps should feel hard' },
+      { sets: 4, reps: `8-10 reps${perSide}`, restSec: 120, note: 'Keep adding weight gradually' },
     ][phase - 1];
   }
-  if (p === 'carry') return { sets: [2, 3, 4][phase - 1], reps: '30米', restSec: 90 };
+  if (p === 'carry') return { sets: [2, 3, 4][phase - 1], reps: '30 m', restSec: 90 };
   if (p === 'conditioning') {
-    if (ex.id === 'mountain_climbers') return { sets: [3, 4, 5][phase - 1], reps: '30秒', restSec: 30 };
-    return { sets: 1, reps: ['15分钟', '20分钟', '25分钟'][phase - 1], restSec: 0 };
+    if (ex.id === 'mountain_climbers') return { sets: [3, 4, 5][phase - 1], reps: '30 s', restSec: 30 };
+    return { sets: 1, reps: ['15 min', '20 min', '25 min'][phase - 1], restSec: 0 };
   }
   if (p === 'neck' || p === 'scap' || p === 'tspine') {
-    if (ex.unit === 'sec') return { sets: 2, reps: '4个方向×10秒', restSec: 30 };
-    return { sets: [2, 3, 3][phase - 1], reps: ex.id === 'prone_ytw' ? '每个字母5次' : '12-15次', restSec: 30 };
+    if (ex.unit === 'sec') return { sets: 2, reps: '4 directions × 10 s', restSec: 30 };
+    return { sets: [2, 3, 3][phase - 1], reps: ex.id === 'prone_ytw' ? '5 per letter' : '12-15 reps', restSec: 30 };
   }
   // core / back_ext / balance
-  if (ex.unit === 'sec') return { sets: [2, 3, 3][phase - 1], reps: ['20秒', '30秒', '45秒'][phase - 1], restSec: 45 };
-  return { sets: [2, 3, 3][phase - 1], reps: ['8次', '10次', '12次'][phase - 1], restSec: 45 };
+  if (ex.unit === 'sec') return { sets: [2, 3, 3][phase - 1], reps: ['20 s', '30 s', '45 s'][phase - 1], restSec: 45 };
+  return { sets: [2, 3, 3][phase - 1], reps: ['8 reps', '10 reps', '12 reps'][phase - 1], restSec: 45 };
 }
 
 export function buildSessions(m: Member, todayStr: string): Session[] {
@@ -224,7 +224,7 @@ export function buildSessions(m: Member, todayStr: string): Session[] {
   });
 }
 
-/** 下一次该练哪一套：按已完成训练次数轮换 A/B */
+/** Which workout is next: rotate A/B by completed sessions */
 export function nextSession(sessions: Session[], completedCount: number): Session {
   return sessions[completedCount % sessions.length];
 }

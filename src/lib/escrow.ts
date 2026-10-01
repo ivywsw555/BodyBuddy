@@ -2,15 +2,15 @@ import type { AppState, Leave, Pool, Settings, WorkoutLog } from '../types';
 import { addDays, daysBetween, mondayOf, monthDays, monthOf, weekday } from './date';
 
 /**
- * 押金池规则（全部由训练记录推算，不单独存账，避免账目不一致）：
- * - 押金池按月建立，一个月包含「周一落在本月」的所有周（周一到周日），
- *   如果押金池在月初几天开始生效，开始日所在的那一周也算进来（从开始日算起）。
- * - 每周必须完成 requiredPerWeek 次有效训练（同一天多次只算 1 次），不可补卡。
- * - 监督人批准的请假日，每天抵扣 1 次要求。
- * - 一周结束（周日过完）后结算：缺 1 次扣 penaltyPerMiss，扣款 100% 归监督人。
- * - 返还方式：weekly = 每周结算后返还当周份额（押金/周数 - 当周罚款）；
- *            monthly = 最后一周结算后一次性返还余额。
- * - 罚款总额不会超过押金。
+ * Deposit pool rules (everything is derived from workout logs, so the books can't drift):
+ * - One pool per month. A month covers every Monday-to-Sunday week whose Monday falls in it.
+ *   If the pool starts in the first days of a month, the week containing the start date counts too (from the start date).
+ * - Each week needs requiredPerWeek valid workouts (several on one day count once). No backfilling.
+ * - Each supervisor-approved leave day lowers that week's requirement by 1.
+ * - When a week ends (after Sunday), each missed workout costs penaltyPerMiss, and 100% of it goes to the supervisor.
+ * - Refunds: weekly = after each week, refund that week's share (deposit / weeks - penalty);
+ *            monthly = refund the remaining balance once the last week is settled.
+ * - Total penalties never exceed the deposit.
  */
 
 export function countsAsDone(log: WorkoutLog, settings: Settings): boolean {
@@ -49,7 +49,7 @@ export function leaveDates(leaves: Leave[], memberId: string): Set<string> {
 export interface WeekResult {
   start: string;
   end: string;
-  /** 押金池生效后的第一天（第一周可能不完整） */
+  /** First day the pool applies to in this week (the first week may be partial) */
   effectiveStart: string;
   required: number;
   done: number;
@@ -59,7 +59,7 @@ export interface WeekResult {
   missed: number;
   penalty: number;
   refund: number;
-  /** 本周结算后押金池余额 */
+  /** Pool balance after this week is settled */
   balanceAfter: number;
 }
 
@@ -74,7 +74,7 @@ export interface PoolResult {
 
 export function poolWeeks(pool: Pool): { start: string; end: string; effectiveStart: string }[] {
   const mondays = monthDays(pool.month).filter((d) => weekday(d) === 1);
-  // 月中（月初几天）开始的押金池：开始日所在、周一落在上个月的那一周也算进来，不让头几天白白空着
+  // A pool starting in the first days of the month also covers the week its start date falls in
   const lead = mondayOf(pool.startDate);
   if (monthOf(pool.startDate) === pool.month && lead < `${pool.month}-01`) mondays.unshift(lead);
   return mondays
@@ -145,7 +145,7 @@ export function computePool(
   };
 }
 
-/** 监督人钱包：所有罚款收入 - 已兑现心愿 */
+/** Supervisor wallet: all penalties earned minus redeemed wishes */
 export function supervisorWallet(state: AppState, supervisorId: string, todayStr: string) {
   const earned = round2(
     state.pools

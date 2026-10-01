@@ -1,7 +1,7 @@
-/** 极简折线图，不引入图表库 */
+/** Minimal line chart, no chart library */
 export function LineChart({ points, unit, height = 120 }: { points: { date: string; value: number }[]; unit: string; height?: number }) {
   if (points.length < 2) {
-    return <p className="muted small">至少需要两次记录才能画出趋势。</p>;
+    return <p className="muted small">Add at least two entries to see a trend.</p>;
   }
   const w = 320;
   const pad = 28;
@@ -13,7 +13,7 @@ export function LineChart({ points, unit, height = 120 }: { points: { date: stri
   const y = (v: number) => height - pad + 8 - ((v - min) / span) * (height - pad * 1.5);
   const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
   return (
-    <svg className="chart" viewBox={`0 0 ${w} ${height}`} role="img" aria-label="趋势图">
+    <svg className="chart" viewBox={`0 0 ${w} ${height}`} role="img" aria-label="Trend chart">
       <path d={d} fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinejoin="round" />
       {points.map((p, i) => (
         <g key={p.date + i}>

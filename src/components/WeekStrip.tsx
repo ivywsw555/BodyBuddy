@@ -3,7 +3,7 @@ import { addDays, mondayOf, today, WEEKDAY_NAMES, weekday } from '../lib/date';
 import { doneDates, leaveDates, pendingDates, poolWeeks } from '../lib/escrow';
 import { useStore } from '../store';
 
-/** 本周 7 天的打卡情况 + 本周要求次数 */
+/** This week's 7 days of check-ins plus the weekly requirement */
 export function WeekStrip({ member }: { member: Member }) {
   const { state } = useStore();
   const t = today();
@@ -23,9 +23,9 @@ export function WeekStrip({ member }: { member: Member }) {
   return (
     <div className="card">
       <div className="row-between">
-        <h3 className="m0">本周打卡</h3>
+        <h3 className="m0">This week</h3>
         <span className={`pill ${doneN >= required ? 'pill-ok' : left > daysLeft ? 'pill-bad' : ''}`}>
-          {doneN}/{required} 次{pendingN ? ` · ${pendingN} 待确认` : ''}
+          {doneN}/{required} done{pendingN ? ` · ${pendingN} pending` : ''}
         </span>
       </div>
       <div className="week-strip">
@@ -45,9 +45,9 @@ export function WeekStrip({ member }: { member: Member }) {
                     : '';
           return (
             <div key={d} className={`day ${cls} ${d === t ? 'is-today' : ''}`}>
-              <span className="day-name">{WEEKDAY_NAMES[wd].slice(1)}</span>
+              <span className="day-name">{WEEKDAY_NAMES[wd]}</span>
               <span className="day-dot">
-                {done.has(d) ? '✓' : pending.has(d) ? '⏳' : leave.has(d) ? '假' : planned ? '•' : ''}
+                {done.has(d) ? '✓' : pending.has(d) ? '⏳' : leave.has(d) ? 'L' : planned ? '•' : ''}
               </span>
             </div>
           );
@@ -55,10 +55,10 @@ export function WeekStrip({ member }: { member: Member }) {
       </div>
       <p className="muted small m0">
         {doneN >= required
-          ? '🎉 本周已达标，多练的不扣钱也不加钱，但对身体有好处！'
+          ? '🎉 Goal met for this week! Extra sessions don’t change the money, but your body will thank you.'
           : left > daysLeft
-            ? `⚠️ 本周剩余 ${daysLeft} 天，还差 ${left} 次，已无法全部补上。`
-            : `还需 ${left} 次${pool ? `，每缺 1 次扣 ${state.settings.currency}${pool.penaltyPerMiss}` : ''}。不可补卡，只能当天打卡。`}
+            ? `⚠️ ${left} sessions still needed with only ${daysLeft} days left, so this week can’t be fully met.`
+            : `${left} more to go${pool ? `; each miss costs ${state.settings.currency}${pool.penaltyPerMiss}` : ''}. Check-ins only count on the day, no backfilling.`}
       </p>
     </div>
   );

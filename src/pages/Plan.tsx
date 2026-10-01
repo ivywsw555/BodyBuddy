@@ -17,7 +17,7 @@ export function PlanPage() {
     return (
       <div className="page">
         <div className="card">
-          <p>{member.name} 目前是纯监督者，没有训练计划。可以在「设置」里把角色改成「训练+监督」。</p>
+          <p>{member.name} is a supervisor only, so there’s no training plan. Change the role to “Trains + supervises” in Settings to get one.</p>
         </div>
       </div>
     );
@@ -29,9 +29,9 @@ export function PlanPage() {
 
   return (
     <div className="page">
-      <h1 className="page-title">{member.avatar} {member.name} 的训练计划</h1>
+      <h1 className="page-title">{member.avatar} {member.name}’s plan</h1>
       <div className="card card-accent">
-        <div className="muted small">第 {Math.max(1, week)} 周</div>
+        <div className="muted small">Week {Math.max(1, week)}</div>
         <h2 className="m0">{PHASE_INFO[phase].name}</h2>
         <p className="small">{PHASE_INFO[phase].desc}</p>
         <div className="seg">
@@ -46,34 +46,34 @@ export function PlanPage() {
                 })
               }
             >
-              阶段{p}
+              Phase {p}
             </button>
           ))}
         </div>
         <p className="muted small m0">
-          {member.phaseOverride ? '已手动锁定阶段，再点一次恢复自动。' : '阶段按开始日期自动推进，也可以手动锁定。'}
+          {member.phaseOverride ? 'Phase locked manually. Tap it again to go back to automatic.' : 'Phases advance automatically from the start date, or tap one to lock it.'}
         </p>
         <div className="tags">
           {member.goals.map((g) => (
             <span key={g} className="tag">{GOAL_NAMES[g]}</span>
           ))}
-          <span className="tag">{member.place === 'gym' ? '🏋️ 健身房' : '🏠 在家'}</span>
+          <span className="tag">{member.place === 'gym' ? '🏋️ Gym' : '🏠 Home'}</span>
           {member.place === 'home' &&
-            (member.equipment.length ? member.equipment.map((e) => <span key={e} className="tag">{EQUIPMENT_NAMES[e]}</span>) : <span className="tag">徒手</span>)}
+            (member.equipment.length ? member.equipment.map((e) => <span key={e} className="tag">{EQUIPMENT_NAMES[e]}</span>) : <span className="tag">Bodyweight</span>)}
         </div>
         <p className="small m0">
-          每周训练日：{member.trainingDays.length ? [...member.trainingDays].sort().map((d) => WEEKDAY_NAMES[d]).join('、') : '未设置'}，A/B 两套轮换。
+          Training days: {member.trainingDays.length ? [...member.trainingDays].sort().map((d) => WEEKDAY_NAMES[d]).join(', ') : 'not set'}. Workouts A and B alternate.
         </p>
       </div>
 
       {fragile && (
         <div className="card card-warn">
-          <h3 className="m0">🦴 骨量低训练原则</h3>
+          <h3 className="m0">🦴 Training rules for low bone density</h3>
           <ul className="small">
-            <li>先找医生/康复师确认可以进行抗阻和冲击训练；有骨折史请先就医。</li>
-            <li>冲击训练从「踮脚落跟」开始，逐步到小跳。{member.cautions.cleared ? '已获许可，第三阶段开放深蹲跳。' : '未在设置中勾选「已获医生许可」前，不安排大重量和高冲击动作。'}</li>
-            <li>所有动作保持脊柱中立，背伸肌训练每次都要做。</li>
-            <li>以下动作不会出现在计划里：</li>
+            <li>Check with a doctor or physio that resistance and impact training are OK. If there’s any fracture history, see a doctor first.</li>
+            <li>Impact work starts with heel drops and builds up to small hops. {member.cautions.cleared ? 'Cleared by a doctor, so jump squats unlock in phase 3.' : 'Heavy lifts and high-impact moves stay out until “Cleared by a doctor” is ticked in Settings.'}</li>
+            <li>Keep the spine neutral in every move, and do back-extensor work every session.</li>
+            <li>These are never put in the plan:</li>
           </ul>
           <ul className="avoid">
             {BONE_AVOID_LIST.map((a) => (
@@ -94,14 +94,14 @@ export function PlanPage() {
             const pattern = templates[si].slots[item.slot];
             return (
               <div key={item.slot} className="plan-item">
-                <button className="ex-demo-btn" onClick={() => setDetail(ex.id)} aria-label="查看动作详情">
+                <button className="ex-demo-btn" onClick={() => setDetail(ex.id)} aria-label="Exercise details">
                   <ExerciseDemo ex={ex} size="sm" />
                 </button>
                 <div className="ex-info">
                   <div className="muted small">{PATTERN_NAMES[pattern]}</div>
                   <b>{ex.name}</b>
                   <div className="ex-dose">
-                    {item.sets} 组 × {item.reps}
+                    {item.sets} sets × {item.reps}
                   </div>
                   {item.candidates.length > 1 && (
                     <button
@@ -114,7 +114,7 @@ export function PlanPage() {
                         })
                       }
                     >
-                      🔄 换一个（{item.candidates.length} 选 1）
+                      🔄 Swap ({item.candidates.length} options)
                     </button>
                   )}
                 </div>
@@ -128,12 +128,13 @@ export function PlanPage() {
           className="btn btn-ghost"
           onClick={() => update((s) => void (s.members.find((x) => x.id === member.id)!.swaps = {}))}
         >
-          恢复推荐动作
+          Reset to recommended exercises
         </button>
       )}
       <p className="muted small">
-        计划依据：ACSM/国际骨质疏松基金会建议（每周 2-3 次渐进抗阻 + 冲击 + 平衡训练），以及 LIFTMOR 研究（高强度抗阻与冲击训练 8 个月腰椎 BMD
-        约 +2.9%）。本应用不能替代医生和康复师的意见。
+        Based on ACSM and International Osteoporosis Foundation guidance (2–3 sessions a week of progressive resistance, impact and balance
+        training) and the LIFTMOR trial (8 months of high-intensity resistance and impact training raised spine BMD by about 2.9%). This app does
+        not replace advice from a doctor or physio.
       </p>
       {detail && <ExerciseDetail ex={EXERCISE_MAP[detail]} onClose={() => setDetail(null)} />}
     </div>

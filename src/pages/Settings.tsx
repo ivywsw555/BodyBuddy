@@ -5,17 +5,17 @@ import { today, uid, WEEKDAY_NAMES } from '../lib/date';
 import { defaultState, useStore } from '../store';
 
 const ROLE_NAMES: Record<Role, string> = {
-  trainee: '训练者',
-  supervisor: '纯监督者',
-  both: '训练 + 监督',
+  trainee: 'Trains',
+  supervisor: 'Supervises only',
+  both: 'Trains + supervises',
 };
 
 const CAUTION_NAMES: Record<keyof Cautions, string> = {
-  spineFragile: '脊柱骨量低（DEXA 黄/红区）',
-  hipFragile: '髋部骨量低',
-  neckShoulderPain: '肩颈背经常酸痛',
-  kneeIssue: '膝盖不适（减少跳跃）',
-  cleared: '已获医生/康复师许可做大重量和高冲击训练',
+  spineFragile: 'Low spine bone density (DEXA yellow/red)',
+  hipFragile: 'Low hip bone density',
+  neckShoulderPain: 'Frequent neck, shoulder or back aches',
+  kneeIssue: 'Knee discomfort (fewer jumps)',
+  cleared: 'Cleared by a doctor/physio for heavy and high-impact training',
 };
 
 export function SettingsPage() {
@@ -26,7 +26,7 @@ export function SettingsPage() {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `bodybuddy-备份-${today()}.json`;
+    a.download = `bodybuddy-backup-${today()}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
   }
@@ -34,16 +34,16 @@ export function SettingsPage() {
   async function importData(file: File) {
     try {
       const data = JSON.parse(await file.text());
-      if (data.version !== 1 || !Array.isArray(data.members)) throw new Error('格式不对');
-      if (confirm('导入会覆盖这台设备上的全部数据，确定吗？')) replace({ ...defaultState(), ...data });
+      if (data.version !== 1 || !Array.isArray(data.members)) throw new Error('not a BodyBuddy backup file');
+      if (confirm('Importing replaces all data on this device. Continue?')) replace({ ...defaultState(), ...data });
     } catch (e) {
-      alert(`导入失败：${(e as Error).message}`);
+      alert(`Import failed: ${(e as Error).message}`);
     }
   }
 
   return (
     <div className="page">
-      <h1 className="page-title">⚙️ 设置</h1>
+      <h1 className="page-title">⚙️ Settings</h1>
       {state.members.map((m) => (
         <MemberEditor key={m.id} member={m} />
       ))}
@@ -53,7 +53,7 @@ export function SettingsPage() {
           update((s) =>
             void s.members.push({
               id: uid(),
-              name: '新成员',
+              name: 'New member',
               avatar: '🙂',
               role: 'trainee',
               goals: ['fitness'],
@@ -68,21 +68,21 @@ export function SettingsPage() {
           )
         }
       >
-        ＋ 添加成员
+        + Add member
       </button>
 
       <div className="card">
-        <h3 className="m0">监督规则</h3>
+        <h3 className="m0">Supervision rules</h3>
         <label className="check">
           <input
             type="checkbox"
             checked={state.settings.requireApproval}
             onChange={(e) => update((s) => void (s.settings.requireApproval = e.target.checked))}
           />
-          打卡需要监督人确认后才算数
+          Check-ins only count after the supervisor approves
         </label>
         <label>
-          一次训练至少完成 {Math.round(state.settings.minCompletion * 100)}% 的组数才算有效
+          A workout counts once at least {Math.round(state.settings.minCompletion * 100)}% of sets are done
           <input
             type="range"
             min={50}
@@ -93,29 +93,29 @@ export function SettingsPage() {
           />
         </label>
         <label>
-          货币符号
+          Currency
           <select value={state.settings.currency} onChange={(e) => update((s) => void (s.settings.currency = e.target.value))}>
-            <option value="¥">¥ 人民币</option>
-            <option value="$">$ 美元</option>
+            <option value="¥">¥ RMB</option>
+            <option value="$">$ USD</option>
           </select>
         </label>
       </div>
 
       <div className="card">
-        <h3 className="m0">数据</h3>
+        <h3 className="m0">Data</h3>
         <p className="muted small">
-          数据只保存在这个浏览器里。建议两个人用同一台设备（比如家里的 iPad），或者定期导出备份。换设备时导出 → 在新设备导入。
+          Data is stored only in this browser. Share one device (like a home iPad) or export backups regularly. To switch devices, export here and import on the new one.
         </p>
         <div className="row wrap">
-          <button className="btn" onClick={exportData}>导出备份</button>
-          <button className="btn" onClick={() => fileRef.current?.click()}>导入备份</button>
+          <button className="btn" onClick={exportData}>Export backup</button>
+          <button className="btn" onClick={() => fileRef.current?.click()}>Import backup</button>
           <button
             className="btn btn-danger"
             onClick={() => {
-              if (confirm('清空全部数据并恢复默认？此操作无法撤销。')) replace(defaultState());
+              if (confirm('Erase all data and reset to defaults? This can’t be undone.')) replace(defaultState());
             }}
           >
-            清空数据
+            Erase data
           </button>
         </div>
         <input
@@ -154,15 +154,15 @@ function MemberEditor({ member }: { member: Member }) {
       </summary>
       <div className="form grid2">
         <label>
-          名字
+          Name
           <input value={member.name} onChange={(e) => edit((m) => void (m.name = e.target.value))} />
         </label>
         <label>
-          头像 emoji
+          Avatar emoji
           <input value={member.avatar} onChange={(e) => edit((m) => void (m.avatar = e.target.value))} />
         </label>
         <label>
-          角色
+          Role
           <select value={member.role} onChange={(e) => edit((m) => void (m.role = e.target.value as Role))}>
             {(Object.keys(ROLE_NAMES) as Role[]).map((r) => (
               <option key={r} value={r}>
@@ -172,12 +172,12 @@ function MemberEditor({ member }: { member: Member }) {
           </select>
         </label>
         <label>
-          谁来监督 TA
+          Supervised by
           <select
             value={member.supervisorId ?? ''}
             onChange={(e) => edit((m) => void (m.supervisorId = e.target.value || undefined))}
           >
-            <option value="">不需要监督</option>
+            <option value="">No supervisor</option>
             {others.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.avatar} {o.name}
@@ -187,7 +187,7 @@ function MemberEditor({ member }: { member: Member }) {
         </label>
       </div>
 
-      <h4>训练目标（可多选）</h4>
+      <h4>Goals (pick any)</h4>
       <div className="chips">
         {(Object.keys(GOAL_NAMES) as Goal[]).map((g) => (
           <button
@@ -200,7 +200,7 @@ function MemberEditor({ member }: { member: Member }) {
         ))}
       </div>
 
-      <h4>身体情况</h4>
+      <h4>Body condition</h4>
       {(Object.keys(CAUTION_NAMES) as (keyof Cautions)[]).map((k) => (
         <label key={k} className="check">
           <input type="checkbox" checked={member.cautions[k]} onChange={(e) => edit((m) => void (m.cautions[k] = e.target.checked))} />
@@ -208,18 +208,18 @@ function MemberEditor({ member }: { member: Member }) {
         </label>
       ))}
 
-      <h4>在哪练</h4>
+      <h4>Where you train</h4>
       <div className="seg">
         <button className={`seg-btn ${member.place === 'gym' ? 'active' : ''}`} onClick={() => edit((m) => void (m.place = 'gym'))}>
-          🏋️ 健身房
+          🏋️ Gym
         </button>
         <button className={`seg-btn ${member.place === 'home' ? 'active' : ''}`} onClick={() => edit((m) => void (m.place = 'home'))}>
-          🏠 在家
+          🏠 Home
         </button>
       </div>
       {member.place === 'home' && (
         <>
-          <p className="muted small">家里有哪些器械？（都不选 = 徒手）</p>
+          <p className="muted small">What equipment do you have at home? (none = bodyweight only)</p>
           <div className="chips">
             {ALL_EQUIPMENT.map((e: Equipment) => (
               <button
@@ -234,7 +234,7 @@ function MemberEditor({ member }: { member: Member }) {
         </>
       )}
 
-      <h4>每周训练日</h4>
+      <h4>Training days</h4>
       <div className="chips">
         {[1, 2, 3, 4, 5, 6, 0].map((d) => (
           <button
@@ -249,14 +249,14 @@ function MemberEditor({ member }: { member: Member }) {
 
       <div className="form grid2">
         <label>
-          训练经验
+          Experience
           <select value={member.level} onChange={(e) => edit((m) => void (m.level = e.target.value as Member['level']))}>
-            <option value="beginner">新手</option>
-            <option value="intermediate">有基础</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Some experience</option>
           </select>
         </label>
         <label>
-          计划开始日期
+          Plan start date
           <input type="date" value={member.startDate} onChange={(e) => edit((m) => void (m.startDate = e.target.value))} />
         </label>
       </div>
@@ -264,7 +264,7 @@ function MemberEditor({ member }: { member: Member }) {
         <button
           className="btn btn-ghost btn-sm"
           onClick={() => {
-            if (!confirm(`删除 ${member.name}？TA 的训练记录会保留在备份里，但不再显示。`)) return;
+            if (!confirm(`Remove ${member.name}? Their records stay in backups but won’t be shown.`)) return;
             update((s) => {
               s.members = s.members.filter((m) => m.id !== member.id);
               s.members.forEach((m) => m.supervisorId === member.id && (m.supervisorId = undefined));
@@ -272,7 +272,7 @@ function MemberEditor({ member }: { member: Member }) {
             });
           }}
         >
-          删除成员
+          Remove member
         </button>
       )}
     </details>

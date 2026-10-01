@@ -32,15 +32,15 @@ export type Pattern =
   | 'conditioning';
 
 export interface Cautions {
-  /** 脊柱骨量低（DEXA 黄/红区）：避免负重屈曲、扭转，冲击训练循序渐进 */
+  /** Low spinal bone density (DEXA yellow/red): no loaded flexion or twisting, impact builds up gradually */
   spineFragile: boolean;
-  /** 髋部骨量低 */
+  /** Low hip bone density */
   hipFragile: boolean;
-  /** 肩颈背部酸痛 */
+  /** Frequent neck, shoulder or upper-back aches */
   neckShoulderPain: boolean;
-  /** 膝盖不适：减少跳跃 */
+  /** Knee discomfort: fewer jumps */
   kneeIssue: boolean;
-  /** 已获医生/康复师许可进行大重量和高冲击训练 */
+  /** Cleared by a doctor/physio for heavy lifting and high-impact work */
   cleared: boolean;
 }
 
@@ -52,39 +52,40 @@ export interface Member {
   goals: Goal[];
   place: Place;
   equipment: Equipment[];
-  /** 0 = 周日 ... 6 = 周六 */
+  /** 0 = Sunday ... 6 = Saturday */
   trainingDays: number[];
   level: Level;
   cautions: Cautions;
-  /** 训练计划开始日期，用于计算阶段 */
+  /** Plan start date, used to work out the phase */
   startDate: string;
   phaseOverride?: Phase;
-  /** 负责监督这个人的成员 */
+  /** Member who supervises this person */
   supervisorId?: string;
-  /** 在计划中手动替换的动作: key = `${session}-${slotIndex}` */
+  /** Manual exercise swaps in the plan: key = `${session}-${slotIndex}` */
   swaps: Record<string, string>;
 }
 
 export interface Exercise {
   id: string;
   name: string;
-  en: string;
+  /** Chinese name, used for Bilibili video search */
+  zh: string;
   pattern: Pattern;
-  /** 需要的器械（全部需要）；空数组 = 徒手 */
+  /** Equipment needed (all of it); empty = bodyweight */
   equip: Equipment[];
-  /** 进阶等级 1-3，同一模式下越大越难 */
+  /** Progression tier 1-3; higher is harder within a pattern */
   tier: Phase;
   muscles: string;
-  tags: ('骨密度' | '增肌' | '体态' | '体能' | '核心' | '平衡')[];
+  tags: ('Bone' | 'Muscle' | 'Posture' | 'Fitness' | 'Core' | 'Balance')[];
   unit: 'reps' | 'sec' | 'meters';
   cues: string[];
   mistakes: string[];
   avoidIf?: (keyof Cautions)[];
-  /** 冲击等级，供骨密度冲击训练使用 */
+  /** Impact level for bone-loading work */
   impact?: 1 | 2 | 3;
-  /** free-exercise-db 图片 id（公共领域） */
+  /** free-exercise-db image id (public domain) */
   img?: string;
-  /** 搜索视频用的关键词 */
+  /** YouTube search query override */
   videoQuery?: string;
 }
 
@@ -117,7 +118,7 @@ export interface LoggedExercise {
 export interface WorkoutLog {
   id: string;
   memberId: string;
-  /** 训练日期 YYYY-MM-DD，只能是记录当天，不可补卡 */
+  /** Workout date YYYY-MM-DD; always the day it was logged (no backfilling) */
   date: string;
   createdAt: string;
   sessionKey: string;
@@ -152,7 +153,7 @@ export interface Pool {
   penaltyPerMiss: number;
   requiredPerWeek: number;
   refundMode: RefundMode;
-  /** 押金池生效日期，之前结束的周不计算 */
+  /** Date the pool takes effect; weeks ending before it are ignored */
   startDate: string;
   createdAt: string;
 }
@@ -194,7 +195,7 @@ export interface Milestone {
   id: string;
   memberId: string;
   metric: MilestoneMetric;
-  /** 目标变化量：BMD 为百分比，肌肉为 kg，体脂为百分点（负数表示下降） */
+  /** Target change: % for BMD, kg for muscle, percentage points for body fat (negative = decrease) */
   target: number;
   reward: number;
   deadline: string;
@@ -202,11 +203,22 @@ export interface Milestone {
   paidAt?: string;
 }
 
+export interface LabRecord {
+  id: string;
+  memberId: string;
+  date: string;
+  /** Key from LAB_TESTS, or a free-text test name */
+  test: string;
+  value: number;
+  unit: string;
+  note?: string;
+}
+
 export interface Settings {
   currency: string;
-  /** 训练记录需要监督人确认才算数 */
+  /** Check-ins only count once the supervisor approves them */
   requireApproval: boolean;
-  /** 一次训练完成多少比例的组数才算有效 */
+  /** Share of planned sets needed for a workout to count */
   minCompletion: number;
 }
 
@@ -221,6 +233,7 @@ export interface AppState {
   dexa: DexaRecord[];
   body: BodyRecord[];
   milestones: Milestone[];
+  labs: LabRecord[];
   customVideos: Record<string, string>;
   settings: Settings;
 }

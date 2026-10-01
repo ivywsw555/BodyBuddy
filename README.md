@@ -1,38 +1,38 @@
-# BodyBuddy 伙伴健身监督
+# BodyBuddy
 
-情侣/伙伴互相监督健身的本地网页应用：按目标和器械自动排训练计划、动作示意图和要领、当天打卡（不可补卡）、监督人确认、押金池按周结算、DEXA 骨密度和体成分阶段奖金。
+A local web app for a couple (or any training partners) to keep each other accountable: training plans built from each person's goals and equipment, exercise demos and form cues, same-day check-ins (no backfilling) approved by a supervisor, a monthly deposit pool settled every week, and DEXA / body-composition / lab-result tracking with milestone rewards.
 
-## 运行
+## Run it
 
-需要 Node.js 18+。
+Requires Node.js 18+.
 
 ```bash
 npm install
 npm run dev
 ```
 
-打开终端里显示的地址（电脑上是 http://localhost:5173 ）。同一个 Wi-Fi 下，手机可以打开终端里显示的 `Network:` 地址。
+Open the address printed in the terminal (http://localhost:5173 on the computer). A phone on the same Wi-Fi can open the `Network:` address.
 
-其他命令：
+Other commands:
 
-- `npm test`：运行押金结算和计划生成的单元测试
-- `npm run build`：打包到 `dist/`
+- `npm test`: unit tests for deposit settlement, plan generation and lab grading
+- `npm run build`: production build into `dist/`
 
-## 功能
+## Features
 
-- **今天**：当天轮到的训练（A/B 轮换），每个动作有示意图、要领、组数勾选、重量记录和组间休息计时；完成后打卡（可附照片），交给监督人确认。监督人在这里确认/驳回打卡、批准请假。
-- **计划**：按目标（骨密度 / 增肌 / 肩颈背 / 体能）、健身房或在家的器械、身体情况生成计划；三个阶段自动推进；可以「换一个」动作。骨量低的人不会被安排卷腹、扭转等禁做动作，未勾选医生许可前不安排大重量和高冲击。
-- **押金**：每月押金池、每周必练次数、缺 1 次扣多少、每周或月末返还；罚金进监督人的红包钱包，可以兑现心愿单。只记账，不涉及真实支付。
-- **进度**：打卡日历、连续达标周数、DEXA 与体成分记录和趋势图、阶梯奖金目标（例如腰椎 BMD +1% / +2% / +3%）。
-- **动作库**：全部动作，可按标签筛选、只看自己能做的；每个动作可以链接 B 站/YouTube 搜索，或设置你们自己选的 Keep/B 站视频。
-- **设置**：成员、角色（训练者 / 纯监督者 / 训练+监督）、目标、器械、训练日、监督规则、数据导出/导入。
+- **Today**: the workout that's up next (A/B rotation), with demo images, form cues, set checkboxes, weight log and a rest timer. Finish and check in (optionally with a photo) for the supervisor to approve. Supervisors approve or reject check-ins and day-off requests here.
+- **Plan**: generated from goals (bone density / muscle / neck-shoulder-back / fitness), gym or home equipment and body condition, in three automatic phases; any exercise can be swapped. People with low bone density never get crunches or twisting moves, and heavy or high-impact moves stay locked until "cleared by a doctor" is ticked.
+- **Deposit**: a monthly deposit, required sessions per week, a fixed penalty per miss, and weekly or month-end refunds. Penalties go to the supervisor's wallet and can be spent on a wishlist. It is a ledger only; no real payments.
+- **Progress**: check-in calendar, weekly streak, DEXA results with WHO zones, body composition, yearly lab results (vitamin D3, calcium, PTH, ALP, testosterone, TSH or any custom test) with typical reference ranges, trend charts, and tiered rewards (e.g. spine BMD +1% / +2% / +3%).
+- **Library**: every exercise, filterable by tag or by what the current person can do; each links to YouTube and Bilibili searches or to your own saved Keep/Bilibili video.
+- **Settings**: members, roles (trains / supervises only / both), goals, equipment, training days, supervision rules, and data export/import.
 
-## 数据
+## Data
 
-所有数据保存在浏览器的 localStorage 里，不上传任何服务器。两个人最好用同一台设备，或者在「设置」里导出备份、在另一台设备导入。
+Everything is stored in the browser's localStorage; nothing is uploaded. Share one device, or export a backup in Settings and import it on another device.
 
-## 致谢
+## Credits
 
-动作示意图来自 [free-exercise-db](https://github.com/yuhonas/free-exercise-db)（Unlicense 公共领域）。
+Exercise images come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (Unlicense, public domain).
 
-本应用不能替代医生或康复师的意见，骨量低的人开始训练前请先咨询医生。
+This app does not replace advice from a doctor or physio. Anyone with low bone density should check with a doctor before starting.

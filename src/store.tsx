@@ -23,7 +23,7 @@ export function defaultState(): AppState {
   };
   const hubby: Member = {
     id: 'm_hubby',
-    name: '老公',
+    name: 'Hubby',
     avatar: '🦴',
     role: 'both',
     goals: ['bone', 'muscle'],
@@ -47,8 +47,9 @@ export function defaultState(): AppState {
     dexa: [],
     body: [],
     milestones: [],
+    labs: [],
     customVideos: {},
-    settings: { currency: '¥', requireApproval: true, minCompletion: 0.8 },
+    settings: { currency: '$', requireApproval: true, minCompletion: 0.8 },
   };
 }
 
@@ -60,7 +61,7 @@ export function loadState(): AppState {
       if (parsed.version === 1) return { ...defaultState(), ...parsed };
     }
   } catch {
-    // 读取失败时使用默认数据
+    // fall back to defaults if stored data can't be read
   }
   return defaultState();
 }
@@ -85,7 +86,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(KEY, JSON.stringify(state));
       setSaveError(null);
     } catch {
-      setSaveError('浏览器存储空间不足，最近的修改可能没有保存。请到「设置」导出备份并删除一些打卡照片。');
+      setSaveError('Browser storage is full, so recent changes may not be saved. Export a backup in Settings and delete some check-in photos.');
     }
   }, [state]);
 

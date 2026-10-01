@@ -14,7 +14,7 @@ export function TodayPage() {
   return (
     <div className="page">
       <h1 className="page-title">
-        {member.avatar} {member.name}，今天是 {fmtDate(today())}
+        {member.avatar} Hi {member.name}, it’s {fmtDate(today())}
       </h1>
       {isSupervisor(member) && <ReviewQueue supervisor={member} />}
       {isTrainee(member) && (
@@ -29,9 +29,9 @@ export function TodayPage() {
 }
 
 const STATUS_TEXT: Record<WorkoutLog['status'], string> = {
-  pending: '⏳ 等待监督人确认',
-  approved: '✅ 监督人已确认',
-  rejected: '❌ 监督人驳回',
+  pending: '⏳ Waiting for supervisor',
+  approved: '✅ Approved',
+  rejected: '❌ Rejected',
 };
 
 function TodayWorkout({ member }: { member: Member }) {
@@ -50,12 +50,12 @@ function TodayWorkout({ member }: { member: Member }) {
   if (todays.length && !forceNew) {
     return (
       <div className="card">
-        <h3>今日训练已打卡</h3>
+        <h3>Today’s workout is checked in</h3>
         {todays.map((l) => (
           <LogSummary key={l.id} log={l} />
         ))}
         <button className="btn btn-ghost btn-sm" onClick={() => setForceNew(true)}>
-          再练一次（同一天只算 1 次）
+          Train again (still counts as 1 day)
         </button>
       </div>
     );
@@ -70,7 +70,7 @@ function TodayWorkout({ member }: { member: Member }) {
             <h2 className="m0">{session.title}</h2>
             <div className="muted small">{session.focus}</div>
           </div>
-          <span className={`pill ${isPlannedDay ? 'pill-ok' : ''}`}>{isPlannedDay ? '今天是训练日' : '今天是休息日'}</span>
+          <span className={`pill ${isPlannedDay ? 'pill-ok' : ''}`}>{isPlannedDay ? 'Training day' : 'Rest day'}</span>
         </div>
         <div className="seg">
           {sessions.map((s) => (
@@ -79,12 +79,12 @@ function TodayWorkout({ member }: { member: Member }) {
               className={`seg-btn ${s.key === session.key ? 'active' : ''}`}
               onClick={() => setChosenKey(s.key)}
             >
-              训练 {s.key}
-              {s.key === suggested.key ? '（轮到）' : ''}
+              Workout {s.key}
+              {s.key === suggested.key ? ' (up next)' : ''}
             </button>
           ))}
         </div>
-        <p className="small m0">热身：快走或原地踏步 5 分钟 + 关节环绕，身体微微出汗再开始。</p>
+        <p className="small m0">Warm-up: 5 minutes of brisk walking or marching in place plus joint circles, until you’re slightly warm.</p>
       </div>
       <WorkoutRunner key={`${member.id}-${session.key}`} member={member} session={session} onDone={() => setForceNew(false)} />
     </>
@@ -119,7 +119,7 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
     try {
       localStorage.setItem(draftKey, JSON.stringify(draft));
     } catch {
-      // 草稿保存失败不影响训练
+      // a failed draft save does not block the workout
     }
   }, [draft, draftKey]);
 
@@ -189,17 +189,17 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
         return (
           <div key={item.exerciseId} className={`card ex-card ${done >= item.sets ? 'ex-done' : ''}`}>
             <div className="ex-row">
-              <button className="ex-demo-btn" onClick={() => setDetail(ex.id)} aria-label="查看动作详情">
+              <button className="ex-demo-btn" onClick={() => setDetail(ex.id)} aria-label="Exercise details">
                 <ExerciseDemo ex={ex} size="sm" />
               </button>
               <div className="ex-info">
-                <div className="muted small">第 {n + 1} 个动作</div>
+                <div className="muted small">Exercise {n + 1}</div>
                 <h3 className="m0">
                   {ex.name}
                 </h3>
                 <div className="ex-dose">
-                  {item.sets} 组 × {item.reps}
-                  {item.restSec ? ` · 休息 ${item.restSec}秒` : ''}
+                  {item.sets} sets × {item.reps}
+                  {item.restSec ? ` · rest ${item.restSec}s` : ''}
                 </div>
                 {item.note && <div className="muted small">{item.note}</div>}
               </div>
@@ -216,13 +216,13 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
                   className={`set-btn ${i < done ? 'checked' : ''}`}
                   onClick={() => toggleSet(item.exerciseId, i, item.restSec)}
                 >
-                  {i < done ? '✓' : `第${i + 1}组`}
+                  {i < done ? '✓' : `Set ${i + 1}`}
                 </button>
               ))}
               {ex.equip.length > 0 && (
                 <input
                   className="load-input"
-                  placeholder={lastLoads[ex.id] ? `上次 ${lastLoads[ex.id]}` : '重量 如 8kg'}
+                  placeholder={lastLoads[ex.id] ? `Last: ${lastLoads[ex.id]}` : 'Weight, e.g. 8kg'}
                   value={draft.loads[ex.id] ?? ''}
                   onChange={(e) => setDraft({ ...draft, loads: { ...draft.loads, [ex.id]: e.target.value } })}
                 />
@@ -239,36 +239,36 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
             {Math.max(0, Math.ceil((rest.until - now) / 1000))}
           </div>
           <div>
-            <b>组间休息</b>
-            <div className="small">点击跳过</div>
+            <b>Rest</b>
+            <div className="small">Tap to skip</div>
           </div>
         </div>
       )}
 
       <div className="card">
         <div className="row-between">
-          <h3 className="m0">完成度 {Math.round(completion * 100)}%</h3>
-          <span className="muted small">≥{Math.round(state.settings.minCompletion * 100)}% 才算有效打卡</span>
+          <h3 className="m0">{Math.round(completion * 100)}% complete</h3>
+          <span className="muted small">≥{Math.round(state.settings.minCompletion * 100)}% needed to count</span>
         </div>
         <div className="progress">
           <div style={{ width: `${completion * 100}%` }} />
         </div>
         {!finishing ? (
           <button className="btn btn-primary btn-block" disabled={totalDone === 0} onClick={() => setFinishing(true)}>
-            完成训练，去打卡
+            Finish workout and check in
           </button>
         ) : (
           <div className="form">
             <label>
-              主观疲劳度 RPE：<b>{rpe}</b>（1 很轻松 · 10 力竭）
+              Effort (RPE): <b>{rpe}</b> (1 very easy · 10 all-out)
               <input type="range" min={1} max={10} value={rpe} onChange={(e) => setRpe(Number(e.target.value))} />
             </label>
             <label>
-              备注（哪里酸痛、哪个动作不会做…）
+              Notes (anything sore, any move you weren’t sure about…)
               <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
             </label>
             <label>
-              打卡照片（可选，给监督人看的证据）
+              Check-in photo (optional proof for your supervisor)
               <input
                 type="file"
                 accept="image/*"
@@ -279,12 +279,12 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
                 }}
               />
             </label>
-            {photo && <img className="proof" src={photo} alt="打卡照片" />}
+            {photo && <img className="proof" src={photo} alt="Check-in photo" />}
             {completion < state.settings.minCompletion && (
-              <p className="warn">完成度不足 {Math.round(state.settings.minCompletion * 100)}%，这次打卡不会计入本周次数。</p>
+              <p className="warn">Less than {Math.round(state.settings.minCompletion * 100)}% done, so this check-in won’t count toward the week.</p>
             )}
             <button className="btn btn-primary btn-block" onClick={finish}>
-              提交打卡{member.supervisorId && state.settings.requireApproval ? `（交给 ${memberName(state, member.supervisorId)} 确认）` : ''}
+              Check in{member.supervisorId && state.settings.requireApproval ? ` (sent to ${memberName(state, member.supervisorId)} to approve)` : ''}
             </button>
           </div>
         )}
@@ -306,19 +306,18 @@ export function LogSummary({ log, showMember }: { log: WorkoutLog; showMember?: 
         <span className={`pill pill-${log.status}`}>{STATUS_TEXT[log.status]}</span>
       </div>
       <div className="muted small">
-        {fmtDate(log.date)} {new Date(log.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} · 完成度{' '}
-        {Math.round(log.completion * 100)}%{log.rpe ? ` · RPE ${log.rpe}` : ''}
+        {fmtDate(log.date)} {new Date(log.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {Math.round(log.completion * 100)}% done{log.rpe ? ` · RPE ${log.rpe}` : ''}
       </div>
       <ul className="log-ex">
         {log.exercises.map((e) => (
           <li key={e.exerciseId} className={e.setsDone < e.setsPlanned ? 'short' : ''}>
-            {EXERCISE_MAP[e.exerciseId]?.name ?? e.exerciseId} {e.setsDone}/{e.setsPlanned} 组{e.load ? ` · ${e.load}` : ''}
+            {EXERCISE_MAP[e.exerciseId]?.name ?? e.exerciseId} {e.setsDone}/{e.setsPlanned} sets{e.load ? ` · ${e.load}` : ''}
           </li>
         ))}
       </ul>
       {log.note && <p className="small">💬 {log.note}</p>}
-      {log.photo && <img className="proof" src={log.photo} alt="打卡照片" />}
-      {log.reviewNote && <p className="small">监督人：{log.reviewNote}</p>}
+      {log.photo && <img className="proof" src={log.photo} alt="Check-in photo" />}
+      {log.reviewNote && <p className="small">Supervisor: {log.reviewNote}</p>}
     </div>
   );
 }
@@ -336,7 +335,7 @@ function ReviewQueue({ supervisor }: { supervisor: Member }) {
   });
 
   function review(id: string, status: 'approved' | 'rejected') {
-    const reviewNote = status === 'rejected' ? prompt('驳回原因（对方会看到）') ?? undefined : undefined;
+    const reviewNote = status === 'rejected' ? prompt('Reason for rejecting (they will see this)') ?? undefined : undefined;
     update((s) => {
       const l = s.logs.find((x) => x.id === id);
       if (l) {
@@ -349,29 +348,29 @@ function ReviewQueue({ supervisor }: { supervisor: Member }) {
 
   return (
     <div className="card card-super">
-      <h3 className="m0">👀 监督面板</h3>
+      <h3 className="m0">👀 Supervisor panel</h3>
       {lastTrained.map(({ id, last }) => (
         <p key={id} className="small m0">
-          {memberName(state, id)}：最近一次训练 {last ? fmtDate(last) : '还没有'}
+          {memberName(state, id)}: last workout {last ? fmtDate(last) : 'none yet'}
         </p>
       ))}
-      {pendingLogs.length === 0 && pendingLeaves.length === 0 && <p className="muted small">没有需要确认的打卡。</p>}
+      {pendingLogs.length === 0 && pendingLeaves.length === 0 && <p className="muted small">Nothing to review.</p>}
       {pendingLogs.map((l) => (
         <div key={l.id} className="review">
           <LogSummary log={l} showMember />
           <div className="row">
             <button className="btn btn-primary btn-sm" onClick={() => review(l.id, 'approved')}>
-              ✓ 确认有效
+              ✓ Approve
             </button>
             <button className="btn btn-danger btn-sm" onClick={() => review(l.id, 'rejected')}>
-              ✕ 驳回
+              ✕ Reject
             </button>
           </div>
         </div>
       ))}
       {pendingLeaves.map((l) => (
         <div key={l.id} className="review">
-          <b>{memberName(state, l.memberId)} 申请请假</b>
+          <b>{memberName(state, l.memberId)} asked for a day off</b>
           <div className="small">
             {fmtDate(l.date)} · {l.reason}
           </div>
@@ -380,13 +379,13 @@ function ReviewQueue({ supervisor }: { supervisor: Member }) {
               className="btn btn-primary btn-sm"
               onClick={() => update((s) => void (s.leaves.find((x) => x.id === l.id)!.status = 'approved'))}
             >
-              批准（本周少练 1 次）
+              Approve (1 fewer this week)
             </button>
             <button
               className="btn btn-danger btn-sm"
               onClick={() => update((s) => void (s.leaves.find((x) => x.id === l.id)!.status = 'rejected'))}
             >
-              不批准
+              Decline
             </button>
           </div>
         </div>
@@ -404,21 +403,21 @@ function LeaveRequest({ member }: { member: Member }) {
   return (
     <div className="card">
       <div className="row-between">
-        <h3 className="m0">请假</h3>
+        <h3 className="m0">Day off</h3>
         <button className="btn btn-sm" onClick={() => setOpen(!open)}>
-          {open ? '收起' : '申请请假'}
+          {open ? 'Close' : 'Request a day off'}
         </button>
       </div>
-      <p className="muted small">生病、出差等特殊情况，需要监督人批准；批准后那一周的要求次数减 1。</p>
+      <p className="muted small">For illness, travel and the like. Your supervisor has to approve it; once approved, that week needs 1 fewer session.</p>
       {open && (
         <div className="form">
           <label>
-            日期
+            Date
             <input type="date" value={date} min={today()} onChange={(e) => setDate(e.target.value)} />
           </label>
           <label>
-            原因
-            <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="例如：发烧 38°C" />
+            Reason
+            <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. fever 38°C" />
           </label>
           <button
             className="btn btn-primary"
@@ -437,13 +436,13 @@ function LeaveRequest({ member }: { member: Member }) {
               setOpen(false);
             }}
           >
-            提交
+            Submit
           </button>
         </div>
       )}
       {mine.map((l) => (
         <div key={l.id} className="small">
-          {fmtDate(l.date)} · {l.reason} · {l.status === 'approved' ? '已批准' : l.status === 'pending' ? '待批准' : '未批准'}
+          {fmtDate(l.date)} · {l.reason} · {l.status === 'approved' ? 'approved' : l.status === 'pending' ? 'pending' : 'declined'}
         </div>
       ))}
     </div>

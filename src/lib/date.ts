@@ -1,4 +1,4 @@
-/** 所有日期都用本地时间的 YYYY-MM-DD 字符串，避免时区错位 */
+/** All dates are local-time YYYY-MM-DD strings to avoid timezone drift */
 
 export function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -26,7 +26,7 @@ export function weekday(s: string): number {
   return parseDate(s).getDay();
 }
 
-/** 周一为一周的开始 */
+/** Weeks start on Monday */
 export function mondayOf(s: string): string {
   const wd = weekday(s);
   return addDays(s, wd === 0 ? -6 : 1 - wd);
@@ -52,16 +52,17 @@ export function addMonths(month: string, n: number): string {
   return toISODate(d).slice(0, 7);
 }
 
-export const WEEKDAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+export const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function fmtDate(s: string): string {
   const d = parseDate(s);
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${WEEKDAY_NAMES[d.getDay()]}`;
+  return `${WEEKDAY_NAMES[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
 }
 
 export function fmtMonth(month: string): string {
   const [y, m] = month.split('-').map(Number);
-  return `${y}年${m}月`;
+  return `${MONTH_NAMES[m - 1]} ${y}`;
 }
 
 export function uid(): string {

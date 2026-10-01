@@ -14,15 +14,16 @@ export function PoolPage() {
 
   return (
     <div className="page">
-      <h1 className="page-title">💰 押金池</h1>
+      <h1 className="page-title">💰 Deposit pool</h1>
       <div className="card small">
-        <b>规则：</b>月初预交押金 → 每周必须完成规定次数 → 缺 1 次扣固定金额（不可补卡）→ 扣款 100% 归监督人支配 → 剩余押金按设置每周或月末返还。
-        这里只记账，实际转账请你们自己完成。
+        <b>How it works: </b>pay a deposit at the start of the month → hit the required sessions every week → each miss costs a fixed amount
+        (no make-ups) → 100% of penalties go to the supervisor → the rest is refunded weekly or at month end. The app only keeps the books;
+        you move the money yourselves.
       </div>
       <div className="row-between month-nav">
-        <button className="btn btn-sm" onClick={() => setMonth(addMonths(month, -1))}>‹ 上月</button>
+        <button className="btn btn-sm" onClick={() => setMonth(addMonths(month, -1))}>‹ Prev</button>
         <b>{fmtMonth(month)}</b>
-        <button className="btn btn-sm" onClick={() => setMonth(addMonths(month, 1))}>下月 ›</button>
+        <button className="btn btn-sm" onClick={() => setMonth(addMonths(month, 1))}>Next ›</button>
       </div>
       {pools.map((p) => (
         <PoolCard key={p.id} pool={p} todayStr={t} />
@@ -45,26 +46,26 @@ function PoolCard({ pool, todayStr }: { pool: Pool; todayStr: string }) {
   return (
     <div className="card">
       <div className="row-between">
-        <h3 className="m0">{memberName(state, pool.traineeId)} 的押金</h3>
-        <span className={`pill ${r.closed ? 'pill-ok' : ''}`}>{r.closed ? '本月已结清' : '进行中'}</span>
+        <h3 className="m0">{memberName(state, pool.traineeId)}’s deposit</h3>
+        <span className={`pill ${r.closed ? 'pill-ok' : ''}`}>{r.closed ? 'Settled' : 'In progress'}</span>
       </div>
       <div className="stats">
-        <Stat label="押金" value={`${c}${pool.deposit}`} />
-        <Stat label="已扣（给监督人）" value={`${c}${r.totalPenalty}`} tone="bad" />
-        <Stat label="已返还" value={`${c}${r.totalRefund}`} tone="ok" />
-        <Stat label="池内余额" value={`${c}${r.balance}`} />
+        <Stat label="Deposit" value={`${c}${pool.deposit}`} />
+        <Stat label="Penalties (to supervisor)" value={`${c}${r.totalPenalty}`} tone="bad" />
+        <Stat label="Refunded" value={`${c}${r.totalRefund}`} tone="ok" />
+        <Stat label="Still in pool" value={`${c}${r.balance}`} />
       </div>
       <p className="muted small">
-        监督人 {memberName(state, pool.supervisorId)} · 每周 {pool.requiredPerWeek} 次 · 缺 1 次扣 {c}
-        {pool.penaltyPerMiss} · {pool.refundMode === 'weekly' ? '每周返还' : '月末一次返还'} · {fmtDate(pool.startDate)} 生效
+        Supervisor {memberName(state, pool.supervisorId)} · {pool.requiredPerWeek}× a week · {c}
+        {pool.penaltyPerMiss} per miss · {pool.refundMode === 'weekly' ? 'weekly refund' : 'refund at month end'} · starts {fmtDate(pool.startDate)}
       </p>
       <table className="table">
         <thead>
           <tr>
-            <th>周</th>
-            <th>完成/要求</th>
-            <th>扣款</th>
-            <th>返还</th>
+            <th>Week</th>
+            <th>Done/needed</th>
+            <th>Penalty</th>
+            <th>Refund</th>
           </tr>
         </thead>
         <tbody>
@@ -72,27 +73,27 @@ function PoolCard({ pool, todayStr }: { pool: Pool; todayStr: string }) {
             <tr key={w.start} className={w.settled ? '' : 'muted'}>
               <td>
                 {w.effectiveStart.slice(5).replace('-', '/')}–{w.end.slice(5).replace('-', '/')}
-                {w.leaves ? <span className="small"> (假{w.leaves})</span> : null}
+                {w.leaves ? <span className="small"> (off {w.leaves})</span> : null}
               </td>
               <td>
                 {w.done}/{w.required}
                 {w.pending ? <span className="small"> +{w.pending}⏳</span> : null}
               </td>
-              <td className={w.penalty ? 'bad' : ''}>{w.settled ? (w.penalty ? `-${c}${w.penalty}` : '0') : '未结算'}</td>
+              <td className={w.penalty ? 'bad' : ''}>{w.settled ? (w.penalty ? `-${c}${w.penalty}` : '0') : 'open'}</td>
               <td className={w.refund ? 'ok' : ''}>{w.settled ? (w.refund ? `${c}${w.refund}` : '—') : ''}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="muted small">每周日 24 点后自动结算。待确认（⏳）的打卡需要监督人确认后才算数。</p>
+      <p className="muted small">Each week settles automatically after Sunday midnight. Pending check-ins (⏳) only count once the supervisor approves them.</p>
       {!started && (
         <button
           className="btn btn-ghost btn-sm"
           onClick={() => {
-            if (confirm('删除这个押金池？')) update((s) => void (s.pools = s.pools.filter((p) => p.id !== pool.id)));
+            if (confirm('Delete this deposit pool?')) update((s) => void (s.pools = s.pools.filter((p) => p.id !== pool.id)));
           }}
         >
-          删除（生效前可删）
+          Delete (only before it starts)
         </button>
       )}
     </div>
@@ -119,7 +120,7 @@ function NewPool({ traineeId, month }: { traineeId: string; month: string }) {
   const [supervisorId, setSupervisorId] = useState(trainee.supervisorId ?? supervisors[0]?.id ?? '');
   const t = today();
   const isPast = month < monthOf(t);
-  // 上个月有押金池时从本月第一个周一开始，避免同一周被两个月重复计算
+  // if last month had a pool, start at this month's first Monday so no week is counted twice
   const hasPrev = state.pools.some((p) => p.traineeId === traineeId && p.month === addMonths(month, -1));
   const firstMonday = monthDays(month).find((d) => weekday(d) === 1)!;
   const base = hasPrev ? firstMonday : `${month}-01`;
@@ -129,29 +130,29 @@ function NewPool({ traineeId, month }: { traineeId: string; month: string }) {
 
   return (
     <div className="card card-dashed">
-      <h3 className="m0">为 {memberName(state, traineeId)} 开 {fmtMonth(month)} 押金池</h3>
+      <h3 className="m0">Start {memberName(state, traineeId)}’s {fmtMonth(month)} pool</h3>
       <div className="form grid2">
         <label>
-          押金（{c}）
+          Deposit ({c})
           <input type="number" min={0} value={deposit} onChange={(e) => setDeposit(Number(e.target.value))} />
         </label>
         <label>
-          缺 1 次扣（{c}）
+          Penalty per miss ({c})
           <input type="number" min={0} value={penalty} onChange={(e) => setPenalty(Number(e.target.value))} />
         </label>
         <label>
-          每周必练次数
+          Required sessions / week
           <input type="number" min={1} max={7} value={required} onChange={(e) => setRequired(Number(e.target.value))} />
         </label>
         <label>
-          返还方式
+          Refund
           <select value={mode} onChange={(e) => setMode(e.target.value as RefundMode)}>
-            <option value="weekly">每周返还</option>
-            <option value="monthly">月末一次返还</option>
+            <option value="weekly">Every week</option>
+            <option value="monthly">At month end</option>
           </select>
         </label>
         <label>
-          监督人（罚金归谁）
+          Supervisor (gets the penalties)
           <select value={supervisorId} onChange={(e) => setSupervisorId(e.target.value)}>
             {supervisors.map((m) => (
               <option key={m.id} value={m.id}>
@@ -161,7 +162,7 @@ function NewPool({ traineeId, month }: { traineeId: string; month: string }) {
           </select>
         </label>
       </div>
-      <p className="muted small">从 {fmtDate(startDate)} 开始生效。建议押金是「痛感适中」的金额，例如 300-500。</p>
+      <p className="muted small">Starts {fmtDate(startDate)}. Pick an amount that stings but doesn’t hurt, e.g. 300–500.</p>
       <button
         className="btn btn-primary btn-block"
         disabled={deposit <= 0 || !supervisorId}
@@ -182,7 +183,7 @@ function NewPool({ traineeId, month }: { traineeId: string; month: string }) {
           })
         }
       >
-        确认已转入押金 {c}
+        Deposit paid: {c}
         {deposit}
       </button>
     </div>
@@ -199,14 +200,14 @@ function Wallet({ supervisorId }: { supervisorId: string }) {
   if (!state.pools.some((p) => p.supervisorId === supervisorId) && !wishes.length) return null;
   return (
     <div className="card card-super">
-      <h3 className="m0">🧧 {memberName(state, supervisorId)} 的红包钱包</h3>
+      <h3 className="m0">🧧 {memberName(state, supervisorId)}’s wallet</h3>
       <div className="stats">
-        <Stat label="罚金收入" value={`${c}${w.earned}`} />
-        <Stat label="已兑现" value={`${c}${w.spent}`} />
-        <Stat label="可支配" value={`${c}${w.available}`} tone="ok" />
+        <Stat label="Earned" value={`${c}${w.earned}`} />
+        <Stat label="Spent" value={`${c}${w.spent}`} />
+        <Stat label="Available" value={`${c}${w.available}`} tone="ok" />
       </div>
-      <p className="muted small">不练就是在给监督人发红包。罚金可以用来兑现下面的心愿单，或者决定周末去哪吃。</p>
-      <h4>心愿单</h4>
+      <p className="muted small">Skipping a workout means paying your supervisor. Spend it on the wishlist below, or on picking where to eat this weekend.</p>
+      <h4>Wishlist</h4>
       {wishes.map((x) => (
         <div key={x.id} className="row-between wish">
           <span className={x.redeemedAt ? 'muted strike' : ''}>
@@ -214,7 +215,7 @@ function Wallet({ supervisorId }: { supervisorId: string }) {
             {x.price}
           </span>
           {x.redeemedAt ? (
-            <span className="small muted">已兑现 {x.redeemedAt.slice(5)}</span>
+            <span className="small muted">Redeemed {x.redeemedAt.slice(5)}</span>
           ) : (
             <span className="row">
               <button
@@ -222,7 +223,7 @@ function Wallet({ supervisorId }: { supervisorId: string }) {
                 disabled={w.available < x.price}
                 onClick={() => update((s) => void (s.wishes.find((y) => y.id === x.id)!.redeemedAt = today()))}
               >
-                兑现
+                Redeem
               </button>
               <button className="btn btn-ghost btn-sm" onClick={() => update((s) => void (s.wishes = s.wishes.filter((y) => y.id !== x.id)))}>
                 ✕
@@ -232,8 +233,8 @@ function Wallet({ supervisorId }: { supervisorId: string }) {
         </div>
       ))}
       <div className="row">
-        <input placeholder="想要的东西" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <input type="number" className="w80" placeholder="价格" value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} />
+        <input placeholder="Something you want" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input type="number" className="w80" placeholder="Price" value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} />
         <button
           className="btn btn-sm"
           disabled={!title.trim() || price <= 0}
@@ -243,7 +244,7 @@ function Wallet({ supervisorId }: { supervisorId: string }) {
             setPrice(0);
           }}
         >
-          添加
+          Add
         </button>
       </div>
     </div>

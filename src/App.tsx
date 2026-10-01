@@ -8,12 +8,12 @@ import { LibraryPage } from './pages/Library';
 import { SettingsPage } from './pages/Settings';
 
 const TABS = [
-  { id: 'today', icon: '🔥', label: '今天', Page: TodayPage },
-  { id: 'plan', icon: '📋', label: '计划', Page: PlanPage },
-  { id: 'pool', icon: '💰', label: '押金', Page: PoolPage },
-  { id: 'progress', icon: '📈', label: '进度', Page: ProgressPage },
-  { id: 'library', icon: '📚', label: '动作库', Page: LibraryPage },
-  { id: 'settings', icon: '⚙️', label: '设置', Page: SettingsPage },
+  { id: 'today', icon: '🔥', label: 'Today', Page: TodayPage },
+  { id: 'plan', icon: '📋', label: 'Plan', Page: PlanPage },
+  { id: 'pool', icon: '💰', label: 'Deposit', Page: PoolPage },
+  { id: 'progress', icon: '📈', label: 'Progress', Page: ProgressPage },
+  { id: 'library', icon: '📚', label: 'Library', Page: LibraryPage },
+  { id: 'settings', icon: '⚙️', label: 'Settings', Page: SettingsPage },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
