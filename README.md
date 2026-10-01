@@ -20,7 +20,7 @@ Other commands:
 
 ## Features
 
-- **Today**: the workout that's up next (A/B rotation), with demo images, form cues, set checkboxes, weight log and a rest timer. Finish and check in (optionally with a photo) for the supervisor to approve. Supervisors approve or reject check-ins and day-off requests here.
+- **Today**: the workout that's up next (A/B rotation), with demo images, form cues, set checkboxes, weight log and a rest timer. Finish and check in (optionally with a photo and the Fitbit numbers for that workout: duration, average heart rate, Active Zone Minutes, calories) for the supervisor to approve. Supervisors approve or reject check-ins and day-off requests here.
 - **Plan**: generated from goals (bone density / muscle / neck-shoulder-back / fitness), gym or home equipment and body condition, in three automatic phases; any exercise can be swapped. People with low bone density never get crunches or twisting moves, and heavy or high-impact moves stay locked until "cleared by a doctor" is ticked.
 - **Deposit**: a monthly deposit, required sessions per week, a fixed penalty per miss, and weekly or month-end refunds. Penalties go to the supervisor's wallet and can be spent on a wishlist. It is a ledger only; no real payments.
 - **Progress**: check-in calendar, weekly streak, DEXA results with WHO zones, body composition, yearly lab results (vitamin D3, calcium, PTH, ALP, testosterone, TSH or any custom test) with typical reference ranges, trend charts, and tiered rewards (e.g. spine BMD +1% / +2% / +3%).

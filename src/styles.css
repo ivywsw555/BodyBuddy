@@ -906,3 +906,14 @@ details > summary {
   padding: 0;
   margin: 4px 0 0;
 }
+
+.tracker {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px 12px;
+  margin: 0;
+}
+.tracker legend {
+  font-size: 13px;
+  padding: 0 4px;
+}

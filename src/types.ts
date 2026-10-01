@@ -108,6 +108,14 @@ export interface Session {
 
 export type LogStatus = 'pending' | 'approved' | 'rejected';
 
+/** Numbers copied from the Fitbit app's record of this workout */
+export interface TrackerStats {
+  minutes?: number;
+  avgHr?: number;
+  zoneMinutes?: number;
+  calories?: number;
+}
+
 export interface LoggedExercise {
   exerciseId: string;
   setsPlanned: number;
@@ -128,6 +136,7 @@ export interface WorkoutLog {
   rpe?: number;
   note?: string;
   photo?: string;
+  tracker?: TrackerStats;
   status: LogStatus;
   reviewNote?: string;
   reviewedBy?: string;

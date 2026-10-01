@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Member, Session, WorkoutLog } from '../types';
+import type { Member, Session, TrackerStats, WorkoutLog } from '../types';
 import { EXERCISE_MAP } from '../data/exercises';
 import { buildSessions, currentPhase, nextSession, PHASE_INFO } from '../lib/plan';
 import { fmtDate, today, uid } from '../lib/date';
@@ -113,6 +113,7 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
   const [rpe, setRpe] = useState(7);
   const [note, setNote] = useState('');
   const [photo, setPhoto] = useState<string | undefined>();
+  const [tracker, setTracker] = useState<Record<keyof TrackerStats, string>>({ minutes: '', avgHr: '', zoneMinutes: '', calories: '' });
   const [finishing, setFinishing] = useState(false);
 
   useEffect(() => {
@@ -164,6 +165,7 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
       rpe,
       note: note.trim() || undefined,
       photo,
+      tracker: trackerStats(tracker),
       status: state.settings.requireApproval && member.supervisorId ? 'pending' : 'approved',
     };
     update((s) => {
@@ -280,6 +282,18 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
               />
             </label>
             {photo && <img className="proof" src={photo} alt="Check-in photo" />}
+            <fieldset className="tracker">
+              <legend>⌚ From your Fitbit (optional)</legend>
+              <p className="muted small m0">Open this workout in the Fitbit app and copy the numbers here.</p>
+              <div className="form grid2">
+                {TRACKER_FIELDS.map(([k, label]) => (
+                  <label key={k}>
+                    {label}
+                    <input inputMode="numeric" value={tracker[k]} onChange={(e) => setTracker({ ...tracker, [k]: e.target.value })} />
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             {completion < state.settings.minCompletion && (
               <p className="warn">Less than {Math.round(state.settings.minCompletion * 100)}% done, so this check-in won’t count toward the week.</p>
             )}
@@ -315,6 +329,7 @@ export function LogSummary({ log, showMember }: { log: WorkoutLog; showMember?: 
           </li>
         ))}
       </ul>
+      {log.tracker && <p className="small">⌚ {fmtTracker(log.tracker)}</p>}
       {log.note && <p className="small">💬 {log.note}</p>}
       {log.photo && <img className="proof" src={log.photo} alt="Check-in photo" />}
       {log.reviewNote && <p className="small">Supervisor: {log.reviewNote}</p>}
@@ -447,4 +462,31 @@ function LeaveRequest({ member }: { member: Member }) {
       ))}
     </div>
   );
+}
+
+const TRACKER_FIELDS: [keyof TrackerStats, string][] = [
+  ['minutes', 'Duration (min)'],
+  ['avgHr', 'Avg heart rate (bpm)'],
+  ['zoneMinutes', 'Active Zone Minutes'],
+  ['calories', 'Calories'],
+];
+
+function trackerStats(raw: Record<keyof TrackerStats, string>): TrackerStats | undefined {
+  const out: TrackerStats = {};
+  for (const [k] of TRACKER_FIELDS) {
+    const n = Number(raw[k]);
+    if (raw[k].trim() && Number.isFinite(n) && n > 0) out[k] = n;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+function fmtTracker(t: TrackerStats): string {
+  return [
+    t.minutes && `${t.minutes} min`,
+    t.avgHr && `avg ${t.avgHr} bpm`,
+    t.zoneMinutes && `${t.zoneMinutes} AZM`,
+    t.calories && `${t.calories} kcal`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
