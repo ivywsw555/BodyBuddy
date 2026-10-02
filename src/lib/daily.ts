@@ -1,5 +1,7 @@
 import type { AppState, Member } from '../types';
-import { addDays, mondayOf } from './date';
+import { EXERCISE_MAP } from '../data/exercises';
+import { addDays, mondayOf, today } from './date';
+import { activeProgram } from './plan';
 
 /**
  * The short routine to do on (almost) every day, outside the main workouts:
@@ -17,7 +19,15 @@ export interface DailyItem {
 
 export const WEEKLY_WALK_GOAL = 150;
 
-export function dailyRoutine(m: Member): DailyItem[] {
+function pillarOf(exerciseId: string): Pillar {
+  const p = EXERCISE_MAP[exerciseId]?.pattern;
+  return p === 'impact' ? 'Strong' : p === 'balance' || p === 'core' ? 'Steady' : 'Straight';
+}
+
+export function dailyRoutine(m: Member, date: string = today()): DailyItem[] {
+  // A supervisor's program brings its own daily moves
+  const program = activeProgram(m, date);
+  if (program) return program.daily.map((d) => ({ ...d, pillar: pillarOf(d.exerciseId) }));
   const bone = m.goals.includes('bone') || m.cautions.spineFragile || m.cautions.hipFragile;
   const straight = bone || m.goals.includes('posture') || m.cautions.neckShoulderPain;
   const items: DailyItem[] = [];
@@ -50,7 +60,7 @@ export function dailyKey(memberId: string, date: string): string {
  * already part of that workout count too (the routine is folded into the workout's warm-up).
  */
 export function dailyComplete(state: AppState, m: Member, date: string): boolean {
-  const items = dailyRoutine(m);
+  const items = dailyRoutine(m, date);
   if (!items.length) return false;
   const ticked = new Set(state.daily[dailyKey(m.id, date)] ?? []);
   const inWorkout = new Set(

@@ -6,7 +6,8 @@ import { defaultState } from '../../store';
 import type { Session, WorkoutLog } from '../../types';
 
 const state = defaultState();
-const [ivy, hubby] = state.members;
+const [ivy, hoDefault] = state.members;
+const hubby = { ...hoDefault, program: null };
 
 describe('time cap', () => {
   it('every generated session fits its phase cap', () => {

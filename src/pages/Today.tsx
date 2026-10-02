@@ -108,7 +108,7 @@ function TodayWorkout({ member }: { member: Member }) {
               className={`seg-btn ${s.key === session.key ? 'active' : ''}`}
               onClick={() => setChosenKey(s.key)}
             >
-              Workout {s.key}
+              {/^\d+$/.test(s.key) ? `Day ${s.key}` : `Workout ${s.key}`}
               {s.key === suggested.key ? ' (up next)' : ''}
             </button>
           ))}

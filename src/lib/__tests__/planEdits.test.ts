@@ -3,7 +3,9 @@ import { buildSessions, canEditPlan, EXTRA_SLOT } from '../plan';
 import { HARD_MINUTES_CAP, hardMinutes } from '../load';
 import { defaultState } from '../../store';
 
-const [ivy, hubby] = defaultState().members;
+const [ivy, hoDefault] = defaultState().members;
+// Generator rules are tested without Ho's fixed month-1 program
+const hubby = { ...hoDefault, program: null };
 
 describe('supervisor plan edits', () => {
   it('only the supervisor can edit; without one the trainee can', () => {
