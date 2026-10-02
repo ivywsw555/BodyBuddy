@@ -36,6 +36,7 @@ export function defaultState(): AppState {
     supervisorId: 'm_ivy',
     swaps: {},
   };
+  const nextYear = `${Number(start.slice(0, 4)) + 1}${start.slice(4)}`;
   return {
     version: 1,
     members: [ivy, hubby],
@@ -46,7 +47,11 @@ export function defaultState(): AppState {
     wishes: [],
     dexa: [],
     body: [],
-    milestones: [],
+    // Ivy's 1-year goal for Hubby (2026-10-02): spine T and Z from -3; -2.8 earns $200, -2.5 a Switch 2
+    milestones: [
+      { id: 'ms_hubby_28', memberId: hubby.id, metric: 'spineScore', target: -2.8, reward: 200, startValue: -3, deadline: nextYear, title: 'Spine T- and Z-score reach -2.8' },
+      { id: 'ms_hubby_25', memberId: hubby.id, metric: 'spineScore', target: -2.5, reward: 0, prize: 'Nintendo Switch 2', startValue: -3, deadline: nextYear, title: 'Spine T- and Z-score reach -2.5' },
+    ],
     labs: [],
     daily: {},
     walks: [],

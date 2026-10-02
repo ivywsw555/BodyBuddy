@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Member, MilestoneMetric } from '../types';
 import { addDays, addMonths, fmtDate, fmtMonth, monthDays, monthOf, today, uid, weekday } from '../lib/date';
 import { doneDates, leaveDates, pendingDates } from '../lib/escrow';
-import { classifyLab, LAB_MAP, LAB_TESTS, labName, METRIC_INFO, metricSeries, milestoneProgress, ZONE_LABEL, zoneOfT } from '../lib/progress';
+import { classifyLab, isScoreMetric, LAB_MAP, LAB_TESTS, labName, METRIC_INFO, metricSeries, milestoneProgress, ZONE_LABEL, zoneOfT } from '../lib/progress';
 import { isTrainee, memberName, useMember, useStore } from '../store';
 import { LineChart } from '../components/LineChart';
 import { LogSummary } from './Today';
@@ -90,6 +90,15 @@ function CalendarCard({ member }: { member: Member }) {
   );
 }
 
+/** Ivy's 1-year goal for a low-bone-density partner: spine T and Z from -3 */
+export const SCORE_GOAL = {
+  start: -3,
+  tiers: [
+    { target: -2.8, reward: 200 },
+    { target: -2.5, reward: 0, prize: 'Nintendo Switch 2' },
+  ],
+};
+
 const PRESETS: Record<'bone' | 'muscle', { metric: MilestoneMetric; target: number; reward: number }[]> = {
   bone: [
     { metric: 'spineBmdPct', target: 1, reward: 500 },
@@ -111,9 +120,12 @@ function Milestones({ member }: { member: Member }) {
   const [metric, setMetric] = useState<MilestoneMetric>(member.goals.includes('bone') ? 'spineBmdPct' : 'muscleKg');
   const [target, setTarget] = useState(2);
   const [reward, setReward] = useState(1000);
+  const [prize, setPrize] = useState('');
   const deadline = `${Number(today().slice(0, 4)) + 1}${today().slice(4)}`;
+  const hasScoreGoal = list.some((m) => isScoreMetric(m.metric));
 
-  function add(metric: MilestoneMetric, target: number, reward: number) {
+  function add(metric: MilestoneMetric, target: number, reward: number, extra: { prize?: string; startValue?: number } = {}) {
+    const info = METRIC_INFO[metric];
     update((s) => {
       s.milestones.push({
         id: uid(),
@@ -122,7 +134,9 @@ function Milestones({ member }: { member: Member }) {
         target,
         reward,
         deadline,
-        title: `${METRIC_INFO[metric].name} ${target > 0 ? '+' : ''}${target}${METRIC_INFO[metric].unit}`,
+        title: isScoreMetric(metric) ? `${info.name} reach ${target}` : `${info.name} ${target > 0 ? '+' : ''}${target}${info.unit}`,
+        ...(extra.prize ? { prize: extra.prize } : {}),
+        ...(extra.startValue !== undefined ? { startValue: extra.startValue } : {}),
       });
     });
   }
@@ -137,13 +151,17 @@ function Milestones({ member }: { member: Member }) {
           <div key={m.id} className="milestone">
             <div className="row-between">
               <b>{m.title}</b>
-              <span className="pill">{c}{m.reward}</span>
+              <span className="pill">{m.prize ? `🎁 ${m.prize}` : `${c}${m.reward}`}</span>
             </div>
             <div className="progress">
               <div style={{ width: `${p.ratio * 100}%` }} className={p.achieved ? 'ok-bg' : ''} />
             </div>
             <div className="small muted">
-              {p.change === undefined
+              {isScoreMetric(m.metric)
+                ? p.latest
+                  ? `Latest ${p.latest.value} on ${p.latest.date} (start ${p.baseline?.value}, goal ${m.target})`
+                  : `Start ${p.baseline?.value ?? '?'}, goal ${m.target}. Add a DEXA result with T- and Z-scores to track it.`
+                : p.change === undefined
                 ? 'Needs at least two measurements'
                 : `So far ${p.change > 0 ? '+' : ''}${p.change.toFixed(m.metric.endsWith('Pct') ? 2 : 1)}${METRIC_INFO[m.metric].unit} (${p.baseline?.date} → ${p.latest?.date})`}
               {' · '}due {m.deadline}
@@ -163,6 +181,24 @@ function Milestones({ member }: { member: Member }) {
           </div>
         );
       })}
+      {member.goals.includes('bone') && !hasScoreGoal && (
+        <div className="milestone">
+          <b>Suggested 1-year goal: spine T- and Z-score from {SCORE_GOAL.start}</b>
+          <ul className="small m0">
+            {SCORE_GOAL.tiers.map((t) => (
+              <li key={t.target}>
+                Reach {t.target}: {t.prize ? `🎁 ${t.prize}` : `${c}${t.reward}`}
+              </li>
+            ))}
+          </ul>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => SCORE_GOAL.tiers.forEach((t) => add('spineScore', t.target, t.reward, { prize: t.prize, startValue: SCORE_GOAL.start }))}
+          >
+            + Add this goal
+          </button>
+        </div>
+      )}
       {list.length === 0 && (
         <div className="row wrap">
           {member.goals.includes('bone') && (
@@ -189,16 +225,20 @@ function Milestones({ member }: { member: Member }) {
             </select>
           </label>
           <label>
-            Target ({METRIC_INFO[metric].unit.trim()})
+            Target ({isScoreMetric(metric) ? 'score, e.g. -2.5' : METRIC_INFO[metric].unit.trim()})
             <input type="number" step="0.1" value={target} onChange={(e) => setTarget(Number(e.target.value))} />
           </label>
           <label>
             Reward ({c})
             <input type="number" value={reward} onChange={(e) => setReward(Number(e.target.value))} />
           </label>
+          <label>
+            Or a gift instead
+            <input value={prize} placeholder="e.g. Nintendo Switch 2" onChange={(e) => setPrize(e.target.value)} />
+          </label>
         </div>
         <p className="muted small">{METRIC_INFO[metric].hint}</p>
-        <button className="btn btn-sm" onClick={() => add(metric, target, reward)}>Add milestone</button>
+        <button className="btn btn-sm" onClick={() => add(metric, target, prize.trim() ? 0 : reward, { prize: prize.trim() || undefined })}>Add milestone</button>
       </details>
     </div>
   );
