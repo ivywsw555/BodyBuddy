@@ -25,7 +25,7 @@ describe('buildSessions', () => {
   });
 
   it('doctor clearance unlocks heavy moves in phase 3', () => {
-    const cleared = { ...hubby, level: 'intermediate' as const, cautions: { ...hubby.cautions, cleared: true } };
+    const cleared = { ...hubby, place: 'gym' as const, level: 'intermediate' as const, cautions: { ...hubby.cautions, cleared: true } };
     const all = ids(cleared, '2027-06-01');
     expect(all).toContain('barbell_squat');
     expect(all).toContain('jump_squat');

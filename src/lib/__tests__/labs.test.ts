@@ -46,7 +46,7 @@ describe('T/Z-score goals', () => {
     expect(p.achieved).toBe(false);
   });
 
-  it('new installs come with Hubby’s two reward tiers', () => {
+  it('new installs come with Ho’s two reward tiers', () => {
     const ms = defaultState().milestones;
     expect(ms.map((m) => [m.target, m.reward, m.prize])).toEqual([
       [-2.8, 200, undefined],
