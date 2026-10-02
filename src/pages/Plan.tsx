@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { BONE_AVOID_LIST, EXERCISE_MAP } from '../data/exercises';
-import { buildSessions, currentPhase, EQUIPMENT_NAMES, GOAL_NAMES, PATTERN_NAMES, PHASE_INFO, templatesFor } from '../lib/plan';
+import { buildSessions, currentPhase, EQUIPMENT_NAMES, GOAL_NAMES, PATTERN_NAMES, PHASE_INFO, slotPattern, templatesFor } from '../lib/plan';
 import { daysBetween, today, WEEKDAY_NAMES } from '../lib/date';
+import { HARD_MINUTES_CAP } from '../lib/load';
 import { isTrainee, useMember, useStore } from '../store';
 import { ExerciseDemo, ExerciseDetail } from '../components/ExerciseDemo';
 import type { Phase } from '../types';
@@ -66,6 +67,48 @@ export function PlanPage() {
         </p>
       </div>
 
+      {(fragile || member.goals.includes('bone')) && (
+        <div className="card">
+          <h3 className="m0">📘 Guidelines this plan follows</h3>
+          <ul className="small">
+            <li>
+              <b>Strong</b>: progressive resistance 2–3× a week, building to 3 sets of up to 8 reps as heavy as good form allows; impact
+              (heel drops → small hops) aiming for about 50 impacts per leg on most days.
+            </li>
+            <li>
+              <b>Steady</b>: balance practice (tandem stance, single-leg stand, heel-to-toe walk) on most days, in the daily routine on Today.
+            </li>
+            <li>
+              <b>Straight</b>: back-extensor and posture work almost every day; no repeated or loaded bending and twisting of the spine.
+            </li>
+            <li>
+              <b>Core</b>: dead bug and bird dog style only (spine stays still), never crunches.
+            </li>
+            <li>
+              <b>Walking</b>: 150 minutes a week of weight-bearing cardio (brisk walking, stairs, Nordic walking).
+            </li>
+            <li>
+              <b>Limits</b>: phase 1 workouts stay under {HARD_MINUTES_CAP[1]} minutes of hard training (walking excluded), and Today reviews each
+              week’s load and suggests a lighter week if it was too much.
+            </li>
+          </ul>
+          <p className="small guide-links m0">
+            Follow-along videos: ROS{' '}
+            <a href="https://theros.org.uk/blog/new-exercise-for-bone-health-films-muscle-strengthening/" target="_blank" rel="noreferrer">
+              muscle-strengthening films, Stage {phase}
+            </a>{' '}
+            (Stage matches your phase). Sources:{' '}
+            <a href="https://theros.org.uk/forms/documents/strong-steady-and-straight" target="_blank" rel="noreferrer">
+              ROS Strong, Steady and Straight
+            </a>{' '}
+            ·{' '}
+            <a href="https://osteoporosis.ca/too-fit-to-fracture/" target="_blank" rel="noreferrer">
+              Osteoporosis Canada Too Fit to Fracture
+            </a>
+          </p>
+        </div>
+      )}
+
       {fragile && (
         <div className="card card-warn">
           <h3 className="m0">🦴 Training rules for low bone density</h3>
@@ -91,7 +134,7 @@ export function PlanPage() {
           <div className="muted small">{s.focus}</div>
           {s.items.map((item) => {
             const ex = EXERCISE_MAP[item.exerciseId];
-            const pattern = templates[si].slots[item.slot];
+            const pattern = slotPattern(templates[si].slots[item.slot]);
             return (
               <div key={item.slot} className="plan-item">
                 <button className="ex-demo-btn" onClick={() => setDetail(ex.id)} aria-label="Exercise details">
@@ -132,8 +175,7 @@ export function PlanPage() {
         </button>
       )}
       <p className="muted small">
-        Based on ACSM and International Osteoporosis Foundation guidance (2–3 sessions a week of progressive resistance, impact and balance
-        training) and the LIFTMOR trial (8 months of high-intensity resistance and impact training raised spine BMD by about 2.9%). This app does
+        Based on the ROS “Strong, Steady and Straight” consensus, Osteoporosis Canada’s “Too Fit to Fracture” and the LIFTMOR trial (8 months of high-intensity resistance and impact training raised spine BMD by about 2.9%). This app does
         not replace advice from a doctor or physio.
       </p>
       {detail && <ExerciseDetail ex={EXERCISE_MAP[detail]} onClose={() => setDetail(null)} />}

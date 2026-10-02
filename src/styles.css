@@ -917,3 +917,64 @@ details > summary {
   font-size: 13px;
   padding: 0 4px;
 }
+
+.daily {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.daily li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+}
+.daily li.is-done .daily-name b {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.daily-check {
+  flex: 0 0 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  background: var(--card);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+.daily-check.checked {
+  background: var(--accent);
+}
+.daily-name {
+  flex: 1;
+  text-align: left;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.pillar {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.pillar-straight {
+  background: var(--super-soft);
+  color: var(--super);
+}
+.pillar-steady {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.pillar-strong {
+  background: var(--accent-soft);
+  color: var(--ok);
+}
+.guide-links a {
+  color: var(--accent);
+}

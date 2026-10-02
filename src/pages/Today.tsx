@@ -7,6 +7,10 @@ import { compressImage } from '../lib/photo';
 import { isSupervisor, isTrainee, memberName, useMember, useStore } from '../store';
 import { ExerciseDemo, ExerciseDetail, VideoLinks } from '../components/ExerciseDemo';
 import { WeekStrip } from '../components/WeekStrip';
+import { DailyCard, WalkCard } from '../components/DailyRoutine';
+import { HARD_MINUTES_CAP, hardMinutes, isCardio, weeklyReview } from '../lib/load';
+import { addDays, mondayOf } from '../lib/date';
+import { dailyKey, dailyRoutine, weekWalkMinutes, WEEKLY_WALK_GOAL } from '../lib/daily';
 
 export function TodayPage() {
   const member = useMember();
@@ -19,8 +23,11 @@ export function TodayPage() {
       {isSupervisor(member) && <ReviewQueue supervisor={member} />}
       {isTrainee(member) && (
         <>
+          <WeeklyReviewCard member={member} />
           <WeekStrip member={member} />
+          <DailyCard member={member} />
           <TodayWorkout member={member} />
+          <WalkCard member={member} />
           <LeaveRequest member={member} />
         </>
       )}
@@ -84,9 +91,13 @@ function TodayWorkout({ member }: { member: Member }) {
             </button>
           ))}
         </div>
+        <p className="small m0">
+          ⏱ About {hardMinutes(session.items)} min of training{session.items.some(isCardio) ? ', plus the walk' : ''}.
+          {phase === 1 ? ` Phase 1 limit: ${HARD_MINUTES_CAP[1]} min (walking doesn’t count).` : ''}
+        </p>
         <p className="small m0">Warm-up: 5 minutes of brisk walking or marching in place plus joint circles, until you’re slightly warm.</p>
       </div>
-      <WorkoutRunner key={`${member.id}-${session.key}`} member={member} session={session} onDone={() => setForceNew(false)} />
+      <WorkoutRunner key={`${member.id}-${session.key}`} member={member} session={session} cap={HARD_MINUTES_CAP[phase]} onDone={() => setForceNew(false)} />
     </>
   );
 }
@@ -94,9 +105,11 @@ function TodayWorkout({ member }: { member: Member }) {
 interface Draft {
   sets: Record<string, number>;
   loads: Record<string, string>;
+  /** When the first set was ticked (ms since epoch) */
+  startedAt?: number;
 }
 
-function WorkoutRunner({ member, session, onDone }: { member: Member; session: Session; onDone: () => void }) {
+function WorkoutRunner({ member, session, cap, onDone }: { member: Member; session: Session; cap: number; onDone: () => void }) {
   const { state, update } = useStore();
   const t = today();
   const draftKey = `bodybuddy.draft.${member.id}.${t}.${session.key}`;
@@ -139,11 +152,18 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
   const totalPlanned = session.items.reduce((s, i) => s + i.sets, 0);
   const totalDone = session.items.reduce((s, i) => s + Math.min(draft.sets[i.exerciseId] ?? 0, i.sets), 0);
   const completion = totalPlanned ? totalDone / totalPlanned : 0;
+  const [clock, setClock] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setClock(Date.now()), 15000);
+    return () => clearInterval(id);
+  }, []);
+  const elapsedMin = draft.startedAt ? Math.floor((Math.max(clock, now) - draft.startedAt) / 60000) : 0;
+  const overCap = elapsedMin >= cap;
 
   function toggleSet(id: string, idx: number, restSec: number) {
     const cur = draft.sets[id] ?? 0;
     const next = idx < cur ? idx : idx + 1;
-    setDraft({ ...draft, sets: { ...draft.sets, [id]: next } });
+    setDraft({ ...draft, sets: { ...draft.sets, [id]: next }, startedAt: draft.startedAt ?? Date.now() });
     if (next > cur && restSec > 0) setRest({ until: Date.now() + restSec * 1000, total: restSec });
   }
 
@@ -166,6 +186,8 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
       note: note.trim() || undefined,
       photo,
       tracker: trackerStats(tracker),
+      durationMin: elapsedMin || undefined,
+      timeCapped: overCap && completion < state.settings.minCompletion ? true : undefined,
       status: state.settings.requireApproval && member.supervisorId ? 'pending' : 'approved',
     };
     update((s) => {
@@ -216,6 +238,7 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
                 <button
                   key={i}
                   className={`set-btn ${i < done ? 'checked' : ''}`}
+                  disabled={overCap && i >= done && !isCardio(item)}
                   onClick={() => toggleSet(item.exerciseId, i, item.restSec)}
                 >
                   {i < done ? '✓' : `Set ${i + 1}`}
@@ -247,9 +270,16 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
         </div>
       )}
 
+      {overCap && (
+        <div className="card card-warn">
+          <b>⏱ {cap}-minute limit reached.</b> Stop the strength work here and check in; this counts as a full session. Walking is still fine.
+        </div>
+      )}
       <div className="card">
         <div className="row-between">
-          <h3 className="m0">{Math.round(completion * 100)}% complete</h3>
+          <h3 className="m0">
+            {Math.round(completion * 100)}% complete{draft.startedAt ? ` · ${elapsedMin} min` : ''}
+          </h3>
           <span className="muted small">≥{Math.round(state.settings.minCompletion * 100)}% needed to count</span>
         </div>
         <div className="progress">
@@ -294,7 +324,10 @@ function WorkoutRunner({ member, session, onDone }: { member: Member; session: S
                 ))}
               </div>
             </fieldset>
-            {completion < state.settings.minCompletion && (
+            {Number(tracker.minutes) > cap && (
+              <p className="warn">That’s longer than the {cap}-minute limit for this phase. Keep the next session shorter.</p>
+            )}
+            {completion < state.settings.minCompletion && !overCap && (
               <p className="warn">Less than {Math.round(state.settings.minCompletion * 100)}% done, so this check-in won’t count toward the week.</p>
             )}
             <button className="btn btn-primary btn-block" onClick={finish}>
@@ -364,11 +397,18 @@ function ReviewQueue({ supervisor }: { supervisor: Member }) {
   return (
     <div className="card card-super">
       <h3 className="m0">👀 Supervisor panel</h3>
-      {lastTrained.map(({ id, last }) => (
-        <p key={id} className="small m0">
-          {memberName(state, id)}: last workout {last ? fmtDate(last) : 'none yet'}
-        </p>
-      ))}
+      {lastTrained.map(({ id, last }) => {
+        const m = state.members.find((x) => x.id === id)!;
+        const routine = dailyRoutine(m).length;
+        const doneToday = state.daily[dailyKey(id, today())]?.length ?? 0;
+        return (
+          <p key={id} className="small m0">
+            {memberName(state, id)}: last workout {last ? fmtDate(last) : 'none yet'}
+            {routine > 0 && ` · daily routine ${doneToday}/${routine}`}
+            {` · walking ${weekWalkMinutes(state, id, today())}/${WEEKLY_WALK_GOAL} min`}
+          </p>
+        );
+      })}
       {pendingLogs.length === 0 && pendingLeaves.length === 0 && <p className="muted small">Nothing to review.</p>}
       {pendingLogs.map((l) => (
         <div key={l.id} className="review">
@@ -489,4 +529,74 @@ function fmtTracker(t: TrackerStats): string {
   ]
     .filter(Boolean)
     .join(' · ');
+}
+
+function WeeklyReviewCard({ member }: { member: Member }) {
+  const { state, update } = useStore();
+  const t = today();
+  const phase = currentPhase(member, t);
+  const r = weeklyReview(state, member, t, phase);
+  const key = `${member.id}|${r.weekStart}`;
+  const answer = state.reviews[key];
+  // nothing to review before the plan started
+  if (r.weekEnd < member.startDate) return null;
+  const head: Record<typeof r.verdict, string> = {
+    'too-much': '⚠️ Last week looks like too much',
+    'about-right': '✅ Last week’s load looked about right',
+    'too-little': '📉 Last week was on the light side',
+    'no-data': '📭 No workouts logged last week',
+  };
+  if (answer) {
+    return (
+      <div className="card small">
+        {head[r.verdict]} · {answer === 'lighten' ? 'this week is lighter (one set fewer).' : 'keeping the plan.'}{' '}
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={() =>
+            update((s) => {
+              delete s.reviews[key];
+              if (answer === 'lighten') s.members.find((x) => x.id === member.id)!.lightenUntil = undefined;
+            })
+          }
+        >
+          Change
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className={`card ${r.verdict === 'too-much' ? 'card-warn' : ''}`}>
+      <h3 className="m0">{head[r.verdict]}</h3>
+      <p className="muted small m0">
+        Weekly check, {r.weekStart.slice(5)} to {r.weekEnd.slice(5)}: {r.sessions}/{r.required} sessions
+        {r.avgRpe !== undefined ? ` · avg effort ${r.avgRpe}/10` : ''}
+        {r.longestMin !== undefined ? ` · longest ${r.longestMin} min` : ''}
+      </p>
+      {r.reasons.length > 0 && (
+        <ul className="small">
+          {r.reasons.map((x) => (
+            <li key={x}>{x}</li>
+          ))}
+        </ul>
+      )}
+      <p className="small">{r.advice}</p>
+      <div className="row wrap">
+        <button
+          className={`btn btn-sm ${r.verdict === 'too-much' ? 'btn-primary' : ''}`}
+          onClick={() =>
+            update((s) => {
+              s.reviews[key] = 'lighten';
+              const m = s.members.find((x) => x.id === member.id)!;
+              m.lightenUntil = addDays(mondayOf(t), 6);
+            })
+          }
+        >
+          Make this week lighter
+        </button>
+        <button className={`btn btn-sm ${r.verdict === 'too-much' ? '' : 'btn-primary'}`} onClick={() => update((s) => void (s.reviews[key] = 'keep'))}>
+          Keep the plan
+        </button>
+      </div>
+    </div>
+  );
 }

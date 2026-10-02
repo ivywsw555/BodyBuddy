@@ -63,6 +63,8 @@ export interface Member {
   supervisorId?: string;
   /** Manual exercise swaps in the plan: key = `${session}-${slotIndex}` */
   swaps: Record<string, string>;
+  /** Lighter sessions (one set fewer) through this date, after a weekly review said it was too much */
+  lightenUntil?: string;
 }
 
 export interface Exercise {
@@ -137,6 +139,10 @@ export interface WorkoutLog {
   note?: string;
   photo?: string;
   tracker?: TrackerStats;
+  /** Minutes from the first ticked set to check-in */
+  durationMin?: number;
+  /** Stopped by the time limit; counts as a full session */
+  timeCapped?: boolean;
   status: LogStatus;
   reviewNote?: string;
   reviewedBy?: string;
@@ -223,6 +229,13 @@ export interface LabRecord {
   note?: string;
 }
 
+export interface WalkLog {
+  id: string;
+  memberId: string;
+  date: string;
+  minutes: number;
+}
+
 export interface Settings {
   currency: string;
   /** Check-ins only count once the supervisor approves them */
@@ -243,6 +256,11 @@ export interface AppState {
   body: BodyRecord[];
   milestones: Milestone[];
   labs: LabRecord[];
+  /** Daily Straight & Steady routine: key `${memberId}|${date}` → exercise ids done */
+  daily: Record<string, string[]>;
+  walks: WalkLog[];
+  /** Weekly load review answers: key `${memberId}|${weekStart}` */
+  reviews: Record<string, 'lighten' | 'keep' | 'harder'>;
   customVideos: Record<string, string>;
   settings: Settings;
 }

@@ -48,6 +48,9 @@ export function defaultState(): AppState {
     body: [],
     milestones: [],
     labs: [],
+    daily: {},
+    walks: [],
+    reviews: {},
     customVideos: {},
     settings: { currency: '$', requireApproval: true, minCompletion: 0.8 },
   };

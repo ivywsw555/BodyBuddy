@@ -61,3 +61,29 @@ describe('buildSessions', () => {
     expect(currentPhase(m, '2026-04-10')).toBe(3);
   });
 });
+
+describe('ROS / Too Fit to Fracture rules', () => {
+  it('core is dead bug in A and bird dog in B', () => {
+    for (const m of [ivy, hubby]) {
+      const [a, b] = buildSessions(m, m.startDate);
+      expect(a.items.map((i) => i.exerciseId)).toContain('dead_bug');
+      expect(b.items.map((i) => i.exerciseId)).toContain('bird_dog');
+    }
+  });
+
+  it('phase 1 bone plan starts with sit-to-stand and ~50 heel drops', () => {
+    const [a] = buildSessions(hubby, hubby.startDate);
+    expect(a.items.map((i) => i.exerciseId)).toContain('chair_squat');
+    const impact = a.items[0];
+    expect(impact.exerciseId).toBe('heel_drop');
+    expect(impact.sets * 10).toBe(50);
+  });
+
+  it('phase 3 without clearance uses 3 sets of up to 8, not 5x5', () => {
+    const later = '2027-06-01';
+    const [a] = buildSessions(hubby, later);
+    const squat = a.items.find((i) => EXERCISE_MAP[i.exerciseId].pattern === 'squat')!;
+    expect(squat.sets).toBe(3);
+    expect(squat.reps).toMatch(/up to 8/);
+  });
+});

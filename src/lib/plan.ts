@@ -1,6 +1,7 @@
 import { EXERCISES, EXERCISE_MAP } from '../data/exercises';
 import type { Equipment, Exercise, Goal, Member, Pattern, Phase, PlannedExercise, Session } from '../types';
 import { daysBetween } from './date';
+import { fitToCap, HARD_MINUTES_CAP } from './load';
 
 export const ALL_EQUIPMENT: Equipment[] = [
   'dumbbell',
@@ -91,60 +92,84 @@ export function candidatesFor(pattern: Pattern, m: Member): Exercise[] {
   return EXERCISES.filter((e) => e.pattern === pattern && hasEquipment(e, m) && !isAvoided(e, m));
 }
 
-function pick(pattern: Pattern, m: Member, phase: Phase, exclude: Set<string>): Exercise | undefined {
+function pick(pattern: Pattern, m: Member, phase: Phase, exclude: Set<string>, prefer?: string): Exercise | undefined {
   const cap = tierCap(m, phase);
   const list = candidatesFor(pattern, m).filter((e) => !exclude.has(e.id));
+  const preferred = prefer && list.find((e) => e.id === prefer);
+  if (preferred) return preferred;
   const allowed = list.filter((e) => e.tier <= cap);
   return allowed[allowed.length - 1] ?? list[0];
 }
 
-type Template = { key: string; title: string; focus: string; slots: Pattern[] };
+/** A slot is a movement pattern, optionally with a preferred exercise (e.g. dead bug vs bird dog for core) */
+type Slot = Pattern | { pattern: Pattern; prefer: string };
+type Template = { key: string; title: string; focus: string; slots: Slot[] };
+
+const slotPattern = (s: Slot): Pattern => (typeof s === 'string' ? s : s.pattern);
+
+/** Core work is always anti-movement, dead-bug style in A and bird-dog style in B (no crunches) */
+const CORE_A: Slot = { pattern: 'core', prefer: 'dead_bug' };
+const CORE_B: Slot = { pattern: 'core', prefer: 'bird_dog' };
 
 function primaryGoal(goals: Goal[]): Goal {
   for (const g of ['bone', 'muscle', 'posture', 'fitness'] as Goal[]) if (goals.includes(g)) return g;
   return 'fitness';
 }
 
+export { slotPattern };
+
 export function templatesFor(m: Member): Template[] {
+  // Bone plans follow the ROS "Strong, Steady and Straight" consensus and Osteoporosis Canada "Too Fit to Fracture"
   const primary = primaryGoal(m.goals);
   let base: Template[];
   switch (primary) {
     case 'bone':
       base = [
-        { key: 'A', title: 'Workout A · Bone loading (squat + press)', focus: 'Impact + axial loading + back extensors', slots: ['impact', 'squat', 'push_v', 'pull_h', 'back_ext', 'core', 'balance'] },
-        { key: 'B', title: 'Workout B · Bone loading (hinge + carry)', focus: 'Impact + hip loading + loaded carry', slots: ['impact', 'hinge', 'lunge', 'push_h', 'pull_v', 'carry', 'core'] },
+        {
+          key: 'A',
+          title: 'Workout A · Strong (squat + press)',
+          focus: 'Impact + hip/spine loading + back extensors (ROS Strong & Straight)',
+          slots: ['impact', 'squat', 'push_v', 'pull_h', 'back_ext', CORE_A, 'balance'],
+        },
+        {
+          key: 'B',
+          title: 'Workout B · Strong (hinge + step-up)',
+          focus: 'Impact + hip loading + loaded carry (ROS Strong & Steady)',
+          slots: ['impact', 'hinge', 'lunge', 'push_h', 'pull_v', 'carry', CORE_B],
+        },
       ];
       break;
     case 'muscle':
       base = [
-        { key: 'A', title: 'Workout A · Full body (squat day)', focus: 'Legs + chest and back', slots: ['squat', 'push_h', 'pull_h', 'lunge', 'core'] },
-        { key: 'B', title: 'Workout B · Full body (hinge day)', focus: 'Posterior chain + shoulders and back', slots: ['hinge', 'push_v', 'pull_v', 'balance', 'core'] },
+        { key: 'A', title: 'Workout A · Full body (squat day)', focus: 'Legs + chest and back', slots: ['squat', 'push_h', 'pull_h', 'lunge', CORE_A] },
+        { key: 'B', title: 'Workout B · Full body (hinge day)', focus: 'Posterior chain + shoulders and back', slots: ['hinge', 'push_v', 'pull_v', 'balance', CORE_B] },
       ];
       break;
     case 'posture':
       base = [
-        { key: 'A', title: 'Workout A · Neck & shoulder rehab', focus: 'Deep neck flexors + shoulder-blade control', slots: ['neck', 'tspine', 'scap', 'scap', 'pull_h', 'core'] },
-        { key: 'B', title: 'Workout B · Back strength', focus: 'Back extensors + rotator cuff', slots: ['neck', 'tspine', 'scap', 'pull_v', 'back_ext', 'core'] },
+        { key: 'A', title: 'Workout A · Neck & shoulder rehab', focus: 'Deep neck flexors + shoulder-blade control', slots: ['neck', 'tspine', 'scap', 'scap', 'pull_h', CORE_A] },
+        { key: 'B', title: 'Workout B · Back strength', focus: 'Back extensors + rotator cuff', slots: ['neck', 'tspine', 'scap', 'pull_v', 'back_ext', CORE_B] },
       ];
       break;
     default:
       base = [
-        { key: 'A', title: 'Workout A · Fitness circuit', focus: 'Full body + cardio', slots: ['squat', 'push_h', 'pull_h', 'conditioning', 'core'] },
-        { key: 'B', title: 'Workout B · Fitness circuit', focus: 'Full body + cardio', slots: ['lunge', 'push_v', 'pull_v', 'conditioning', 'core'] },
+        { key: 'A', title: 'Workout A · Fitness circuit', focus: 'Full body + cardio', slots: ['squat', 'push_h', 'pull_h', 'conditioning', CORE_A] },
+        { key: 'B', title: 'Workout B · Fitness circuit', focus: 'Full body + cardio', slots: ['lunge', 'push_v', 'pull_v', 'conditioning', CORE_B] },
       ];
   }
   return base.map((t) => {
     const slots = [...t.slots];
+    const has = (p: Pattern) => slots.some((s) => slotPattern(s) === p);
     if (primary !== 'bone' && m.goals.includes('bone')) {
-      if (!slots.includes('impact')) slots.unshift('impact');
-      if (!slots.includes('back_ext')) slots.push('back_ext');
+      if (!has('impact')) slots.unshift('impact');
+      if (!has('back_ext')) slots.push('back_ext');
     }
     if (primary !== 'posture' && (m.goals.includes('posture') || m.cautions.neckShoulderPain)) {
       // neck/shoulder issues: put these first as a warm-up
-      if (!slots.includes('neck')) slots.unshift('neck');
-      if (!slots.includes('scap')) slots.splice(1, 0, 'scap');
+      if (!has('neck')) slots.unshift('neck');
+      if (!has('scap')) slots.splice(1, 0, 'scap');
     }
-    if (primary !== 'fitness' && m.goals.includes('fitness') && !slots.includes('conditioning')) {
+    if (primary !== 'fitness' && m.goals.includes('fitness') && !has('conditioning')) {
       slots.push('conditioning');
     }
     return { ...t, slots };
@@ -163,21 +188,20 @@ export function dose(
   if (p === 'impact') {
     if (ex.unit === 'sec') return { sets: [3, 4, 5][phase - 1], reps: '30 s', restSec: 60 };
     return {
-      sets: [3, 4, 5][phase - 1],
+      sets: 5,
       reps: '10 reps',
-      restSec: 60,
-      note: 'Do impact work first, while you’re fresh',
+      restSec: 45,
+      note: 'Do impact work first, while you’re fresh. ROS aims for about 50 impacts per leg on most days',
     };
   }
   if (STRENGTH.includes(p)) {
     const perSide = p === 'lunge' || ex.id === 'db_row' ? ' each side' : '';
     if (boneFirst) {
-      const s = [
-        { sets: 2, reps: `10-12 reps${perSide}`, restSec: 90, note: 'RPE 6: you could do 4 more reps. Focus on form' },
-        { sets: 3, reps: `8 reps${perSide}`, restSec: 120, note: 'RPE 7-8: try adding a little weight each week' },
-        { sets: 5, reps: `5 reps${perSide}`, restSec: 180, note: 'About 80-85% of max, following the LIFTMOR study protocol' },
-      ][phase - 1];
-      return s;
+      // ROS Strong: learn the move, then 3 sets of up to 8 reps as heavy as good form allows
+      if (phase === 1) return { sets: 2, reps: `10-12 reps${perSide}`, restSec: 90, note: 'ROS Stage 1: learn the move; you could do 3–4 more reps' };
+      if (phase === 2) return { sets: 3, reps: `8-10 reps${perSide}`, restSec: 120, note: 'ROS Stage 2: the last rep should be hard; add weight when it isn’t' };
+      if (m.cautions.cleared) return { sets: 5, reps: `5 reps${perSide}`, restSec: 180, note: 'About 80-85% of max, following the LIFTMOR study protocol' };
+      return { sets: 3, reps: `up to 8 reps${perSide}`, restSec: 150, note: 'ROS Stage 3: as heavy as good form allows' };
     }
     return [
       { sets: 2, reps: `12-15 reps${perSide}`, restSec: 60, note: 'Light weight while you learn the move' },
@@ -194,6 +218,7 @@ export function dose(
     if (ex.unit === 'sec') return { sets: 2, reps: '4 directions × 10 s', restSec: 30 };
     return { sets: [2, 3, 3][phase - 1], reps: ex.id === 'prone_ytw' ? '5 per letter' : '12-15 reps', restSec: 30 };
   }
+  if (ex.id === 'heel_toe_walk') return { sets: [2, 3, 3][phase - 1], reps: '10 steps', restSec: 30 };
   // core / back_ext / balance
   if (ex.unit === 'sec') return { sets: [2, 3, 3][phase - 1], reps: ['20 s', '30 s', '45 s'][phase - 1], restSec: 45 };
   return { sets: [2, 3, 3][phase - 1], reps: ['8 reps', '10 reps', '12 reps'][phase - 1], restSec: 45 };
@@ -201,26 +226,33 @@ export function dose(
 
 export function buildSessions(m: Member, todayStr: string): Session[] {
   const phase = currentPhase(m, todayStr);
+  const lighter = !!m.lightenUntil && todayStr <= m.lightenUntil;
   return templatesFor(m).map((t) => {
     const used = new Set<string>();
     const items: PlannedExercise[] = [];
-    t.slots.forEach((pattern, slot) => {
+    t.slots.forEach((spec, slot) => {
+      const pattern = slotPattern(spec);
       const swapId = m.swaps[`${t.key}-${slot}`];
       const swapped = swapId ? EXERCISE_MAP[swapId] : undefined;
       const ex =
         swapped && swapped.pattern === pattern && hasEquipment(swapped, m) && !isAvoided(swapped, m)
           ? swapped
-          : pick(pattern, m, phase, used);
+          : pick(pattern, m, phase, used, typeof spec === 'string' ? undefined : spec.prefer);
       if (!ex) return;
       used.add(ex.id);
+      const d = dose(ex, m, phase);
+      if (lighter && ex.pattern !== 'conditioning') {
+        d.sets = Math.max(1, d.sets - 1);
+        d.note = `Lighter week: one set fewer. ${d.note ?? ''}`.trim();
+      }
       items.push({
         exerciseId: ex.id,
         slot,
-        ...dose(ex, m, phase),
+        ...d,
         candidates: candidatesFor(pattern, m).map((e) => e.id),
       });
     });
-    return { key: t.key, title: t.title, focus: t.focus, items };
+    return fitToCap({ key: t.key, title: t.title, focus: t.focus, items }, HARD_MINUTES_CAP[phase]);
   });
 }
 

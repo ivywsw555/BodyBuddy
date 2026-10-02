@@ -14,7 +14,7 @@ import { addDays, daysBetween, mondayOf, monthDays, monthOf, weekday } from './d
  */
 
 export function countsAsDone(log: WorkoutLog, settings: Settings): boolean {
-  if (log.completion < settings.minCompletion) return false;
+  if (log.completion < settings.minCompletion && !log.timeCapped) return false;
   if (log.status === 'approved') return true;
   return log.status === 'pending' && !settings.requireApproval;
 }
@@ -33,7 +33,7 @@ export function pendingDates(logs: WorkoutLog[], memberId: string, settings: Set
         (l) =>
           l.memberId === memberId &&
           l.status === 'pending' &&
-          l.completion >= settings.minCompletion &&
+          (l.completion >= settings.minCompletion || l.timeCapped) &&
           !done.has(l.date),
       )
       .map((l) => l.date),
