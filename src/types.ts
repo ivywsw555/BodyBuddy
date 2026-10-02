@@ -65,6 +65,26 @@ export interface Member {
   swaps: Record<string, string>;
   /** Lighter sessions (one set fewer) through this date, after a weekly review said it was too much */
   lightenUntil?: string;
+  /** Supervisor's changes to planned exercises: key = `${session}-${slotIndex}` */
+  planEdits?: Record<string, PlanEdit>;
+  /** Exercises the supervisor added, per session key */
+  planExtras?: Record<string, PlanExtra[]>;
+  /** Note from the supervisor shown on Plan and Today */
+  planNote?: string;
+  planEditedBy?: string;
+  planEditedAt?: string;
+}
+
+export interface PlanEdit {
+  sets?: number;
+  reps?: string;
+  removed?: boolean;
+}
+
+export interface PlanExtra {
+  exerciseId: string;
+  sets: number;
+  reps: string;
 }
 
 export interface Exercise {
@@ -99,6 +119,9 @@ export interface PlannedExercise {
   restSec: number;
   note?: string;
   candidates: string[];
+  /** Changed or added by the supervisor */
+  edited?: boolean;
+  extra?: boolean;
 }
 
 export interface Session {

@@ -87,6 +87,12 @@ export function hasEquipment(ex: Exercise, m: Member): boolean {
   return ex.equip.every((e) => eq.has(e));
 }
 
+/** The supervisor manages the plan; without one, the trainee does */
+export function canEditPlan(viewer: Member | undefined, trainee: Member): boolean {
+  if (!viewer) return false;
+  return trainee.supervisorId ? viewer.id === trainee.supervisorId : viewer.id === trainee.id;
+}
+
 /** Every exercise this person can do for a pattern (easiest to hardest) */
 export function candidatesFor(pattern: Pattern, m: Member): Exercise[] {
   return EXERCISES.filter((e) => e.pattern === pattern && hasEquipment(e, m) && !isAvoided(e, m));
@@ -224,6 +230,9 @@ export function dose(
   return { sets: [2, 3, 3][phase - 1], reps: ['8 reps', '10 reps', '12 reps'][phase - 1], restSec: 45 };
 }
 
+/** Slot numbers at or above this are exercises the supervisor added */
+export const EXTRA_SLOT = 100;
+
 export function buildSessions(m: Member, todayStr: string): Session[] {
   const phase = currentPhase(m, todayStr);
   const lighter = !!m.lightenUntil && todayStr <= m.lightenUntil;
@@ -241,6 +250,10 @@ export function buildSessions(m: Member, todayStr: string): Session[] {
       if (!ex) return;
       used.add(ex.id);
       const d = dose(ex, m, phase);
+      const edit = m.planEdits?.[`${t.key}-${slot}`];
+      if (edit?.removed) return;
+      if (edit?.sets) d.sets = edit.sets;
+      if (edit?.reps) d.reps = edit.reps;
       if (lighter && ex.pattern !== 'conditioning') {
         d.sets = Math.max(1, d.sets - 1);
         d.note = `Lighter week: one set fewer. ${d.note ?? ''}`.trim();
@@ -250,8 +263,19 @@ export function buildSessions(m: Member, todayStr: string): Session[] {
         slot,
         ...d,
         candidates: candidatesFor(pattern, m).map((e) => e.id),
+        edited: !!(swapped || edit?.sets || edit?.reps) || undefined,
       });
     });
+    // Exercises the supervisor added; unsafe or unavailable ones are skipped
+    (m.planExtras?.[t.key] ?? []).forEach((x, i) => {
+      const ex = EXERCISE_MAP[x.exerciseId];
+      if (!ex || used.has(ex.id) || !hasEquipment(ex, m) || isAvoided(ex, m)) return;
+      used.add(ex.id);
+      const d = dose(ex, m, phase);
+      const sets = lighter && ex.pattern !== 'conditioning' ? Math.max(1, x.sets - 1) : x.sets;
+      items.push({ exerciseId: ex.id, slot: EXTRA_SLOT + i, sets, reps: x.reps, restSec: d.restSec, candidates: [ex.id], extra: true });
+    });
+    // The time cap still applies to the supervisor's edits
     return fitToCap({ key: t.key, title: t.title, focus: t.focus, items }, HARD_MINUTES_CAP[phase]);
   });
 }

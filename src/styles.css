@@ -978,3 +978,40 @@ details > summary {
 .guide-links a {
   color: var(--accent);
 }
+
+.plan-edit {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.reps-input {
+  width: 9em;
+  max-width: 100%;
+  font: inherit;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+}
+.row-gap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+}
+.row-gap select {
+  max-width: 100%;
+}
+.seg-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}

@@ -95,6 +95,11 @@ function TodayWorkout({ member }: { member: Member }) {
           ⏱ About {hardMinutes(session.items)} min of training{session.items.some(isCardio) ? ', plus the walk' : ''}.
           {phase === 1 ? ` Phase 1 limit: ${HARD_MINUTES_CAP[1]} min (walking doesn’t count).` : ''}
         </p>
+        {member.planNote && (
+          <p className="small m0">
+            💬 From {memberName(state, member.supervisorId)}: “{member.planNote}”
+          </p>
+        )}
         <p className="small m0">Warm-up: 5 minutes of brisk walking or marching in place plus joint circles, until you’re slightly warm.</p>
       </div>
       <WorkoutRunner key={`${member.id}-${session.key}`} member={member} session={session} cap={HARD_MINUTES_CAP[phase]} onDone={() => setForceNew(false)} />
