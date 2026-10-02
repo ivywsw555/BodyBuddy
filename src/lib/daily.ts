@@ -45,11 +45,24 @@ export function dailyKey(memberId: string, date: string): string {
   return `${memberId}|${date}`;
 }
 
+/**
+ * A day's routine is complete when every move is ticked. On a workout day, moves that were
+ * already part of that workout count too (the routine is folded into the workout's warm-up).
+ */
+export function dailyComplete(state: AppState, m: Member, date: string): boolean {
+  const items = dailyRoutine(m);
+  if (!items.length) return false;
+  const ticked = new Set(state.daily[dailyKey(m.id, date)] ?? []);
+  const inWorkout = new Set(
+    state.logs.filter((l) => l.memberId === m.id && l.date === date && l.status !== 'rejected').flatMap((l) => l.exercises.map((e) => e.exerciseId)),
+  );
+  return items.every((i) => ticked.has(i.exerciseId) || inWorkout.has(i.exerciseId));
+}
+
 /** Days in a row (ending today, or yesterday if today isn't finished yet) with the whole routine done */
 export function dailyStreak(state: AppState, m: Member, todayStr: string): number {
-  const total = dailyRoutine(m).length;
-  if (!total) return 0;
-  const complete = (d: string) => (state.daily[dailyKey(m.id, d)]?.length ?? 0) >= total;
+  if (!dailyRoutine(m).length) return 0;
+  const complete = (d: string) => dailyComplete(state, m, d);
   let d = complete(todayStr) ? todayStr : addDays(todayStr, -1);
   let n = 0;
   while (complete(d)) {

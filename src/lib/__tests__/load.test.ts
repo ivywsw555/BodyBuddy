@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fitToCap, hardMinutes, weeklyReview } from '../load';
 import { buildSessions } from '../plan';
-import { dailyRoutine } from '../daily';
+import { dailyComplete, dailyKey, dailyRoutine } from '../daily';
 import { defaultState } from '../../store';
 import type { Session, WorkoutLog } from '../../types';
 
@@ -72,5 +72,18 @@ describe('dailyRoutine', () => {
     const pillars = (x: typeof ivy) => new Set(dailyRoutine(x).map((i) => i.pillar));
     expect([...pillars(hubby)].sort()).toEqual(['Steady', 'Straight', 'Strong']);
     expect([...pillars(ivy)]).toEqual(['Straight']);
+  });
+});
+
+describe('dailyComplete', () => {
+  it('counts moves already done in that day’s workout', () => {
+    const s = defaultState();
+    const [ivy] = s.members;
+    const ids = dailyRoutine(ivy).map((i) => i.exerciseId);
+    const d = '2026-10-05';
+    s.daily[dailyKey(ivy.id, d)] = ids.slice(1);
+    expect(dailyComplete(s, ivy, d)).toBe(false);
+    s.logs.push({ id: 'l', memberId: ivy.id, date: d, createdAt: d, sessionKey: 'A', title: 'A', completion: 1, status: 'pending', exercises: [{ exerciseId: ids[0], setsPlanned: 2, setsDone: 2 }] });
+    expect(dailyComplete(s, ivy, d)).toBe(true);
   });
 });

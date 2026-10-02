@@ -10,7 +10,7 @@ import { WeekStrip } from '../components/WeekStrip';
 import { DailyCard, WalkCard } from '../components/DailyRoutine';
 import { HARD_MINUTES_CAP, hardMinutes, isCardio, weeklyReview } from '../lib/load';
 import { addDays, mondayOf } from '../lib/date';
-import { dailyKey, dailyRoutine, weekWalkMinutes, WEEKLY_WALK_GOAL } from '../lib/daily';
+import { dailyComplete, dailyKey, dailyRoutine, weekWalkMinutes, WEEKLY_WALK_GOAL } from '../lib/daily';
 
 export function TodayPage() {
   const member = useMember();
@@ -25,8 +25,7 @@ export function TodayPage() {
         <>
           <WeeklyReviewCard member={member} />
           <WeekStrip member={member} />
-          <DailyCard member={member} />
-          <TodayWorkout member={member} />
+          <TodayMain member={member} />
           <WalkCard member={member} />
           <LeaveRequest member={member} />
         </>
@@ -40,6 +39,24 @@ const STATUS_TEXT: Record<WorkoutLog['status'], string> = {
   approved: '✅ Approved',
   rejected: '❌ Rejected',
 };
+
+/** One thing per day: the workout (with the daily moves as its warm-up) on training days, the 10-minute routine on rest days */
+function TodayMain({ member }: { member: Member }) {
+  const { state } = useStore();
+  const [trainAnyway, setTrainAnyway] = useState(false);
+  const t = today();
+  const isPlannedDay = member.trainingDays.includes(new Date().getDay());
+  const trainedToday = state.logs.some((l) => l.memberId === member.id && l.date === t);
+  if (isPlannedDay || trainedToday || trainAnyway) return <TodayWorkout member={member} />;
+  return (
+    <>
+      <DailyCard member={member} />
+      <button className="btn btn-ghost btn-sm" onClick={() => setTrainAnyway(true)}>
+        Do a full workout anyway
+      </button>
+    </>
+  );
+}
 
 function TodayWorkout({ member }: { member: Member }) {
   const { state } = useStore();
@@ -56,6 +73,7 @@ function TodayWorkout({ member }: { member: Member }) {
 
   if (todays.length && !forceNew) {
     return (
+      <>
       <div className="card">
         <h3>Today’s workout is checked in</h3>
         {todays.map((l) => (
@@ -65,6 +83,10 @@ function TodayWorkout({ member }: { member: Member }) {
           Train again (still counts as 1 day)
         </button>
       </div>
+      {!dailyComplete(state, member, t) && (
+        <DailyCard member={member} mode="leftover" skip={todays.flatMap((l) => l.exercises.map((e) => e.exerciseId))} />
+      )}
+      </>
     );
   }
 
@@ -100,8 +122,12 @@ function TodayWorkout({ member }: { member: Member }) {
             💬 From {memberName(state, member.supervisorId)}: “{member.planNote}”
           </p>
         )}
-        <p className="small m0">Warm-up: 5 minutes of brisk walking or marching in place plus joint circles, until you’re slightly warm.</p>
       </div>
+      {dailyRoutine(member).length > 0 ? (
+        <DailyCard member={member} mode="warmup" skip={session.items.map((i) => i.exerciseId)} />
+      ) : (
+        <p className="small">Warm-up: 5 minutes of brisk walking or marching in place plus joint circles, until you’re slightly warm.</p>
+      )}
       <WorkoutRunner key={`${member.id}-${session.key}`} member={member} session={session} cap={HARD_MINUTES_CAP[phase]} onDone={() => setForceNew(false)} />
     </>
   );

@@ -9,15 +9,17 @@ import { ExerciseDetail } from './ExerciseDemo';
 const PILLAR_CLASS: Record<Pillar, string> = { Straight: 'pillar-straight', Steady: 'pillar-steady', Strong: 'pillar-strong' };
 
 /** 5–10 minutes most days: ROS "Straight" posture work, "Steady" balance and daily impact */
-export function DailyCard({ member }: { member: Member }) {
+export function DailyCard({ member, mode = 'rest', skip }: { member: Member; mode?: 'rest' | 'warmup' | 'leftover'; skip?: string[] }) {
   const { state, update } = useStore();
   const [detail, setDetail] = useState<string | null>(null);
-  const items = dailyRoutine(member);
+  // In warm-up mode, moves that are already in today's workout aren't repeated
+  const items = dailyRoutine(member).filter((i) => !skip?.includes(i.exerciseId));
   if (!items.length) return null;
   const t = today();
   const key = dailyKey(member.id, t);
   const done = new Set(state.daily[key] ?? []);
   const streak = dailyStreak(state, member, t);
+  const doneN = items.filter((i) => done.has(i.exerciseId)).length;
   const pillars = [...new Set(items.map((i) => i.pillar))];
 
   function toggle(id: string) {
@@ -32,13 +34,20 @@ export function DailyCard({ member }: { member: Member }) {
   return (
     <div className="card">
       <div className="row-between">
-        <h3 className="m0">☀️ Daily 10 min · {pillars.join(' & ')}</h3>
-        <span className={`pill ${done.size >= items.length ? 'pill-ok' : ''}`}>
-          {done.size}/{items.length}
+        <h3 className="m0">{mode === 'warmup' ? '🔥 Warm-up: your daily moves' : mode === 'leftover' ? '☀️ Daily moves left' : `☀️ Daily 10 min · ${pillars.join(' & ')}`}</h3>
+        <span className={`pill ${doneN >= items.length ? 'pill-ok' : ''}`}>
+          {doneN}/{items.length}
         </span>
       </div>
       <p className="muted small m0">
-        Every day, training day or not. {streak > 0 ? `🔥 ${streak}-day streak.` : 'Finish all of them to start a streak.'}
+        {
+          {
+            warmup: 'Start with 5 minutes of brisk walking or marching in place, then these. They count as today’s daily routine. ',
+            leftover: 'These weren’t in today’s workout. Fit them in any time today to keep the streak. ',
+            rest: 'Rest day: just these 10 minutes today. ',
+          }[mode]
+        }
+        {streak > 0 ? `🔥 ${streak}-day streak.` : 'Finish all of them to start a streak.'}
       </p>
       <ul className="daily">
         {items.map((it) => {
