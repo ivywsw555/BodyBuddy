@@ -94,8 +94,8 @@ export function PlanPage() {
           {member.goals.map((g) => (
             <span key={g} className="tag">{GOAL_NAMES[g]}</span>
           ))}
-          <span className="tag">{member.place === 'gym' ? '🏋️ Gym' : '🏠 Home'}</span>
-          {member.place === 'home' &&
+          <span className="tag">{{ gym: '🏋️ Gym', home: '🏠 Home', both: '🔁 Home or gym' }[member.place]}</span>
+          {member.place !== 'gym' &&
             (member.equipment.length ? member.equipment.map((e) => <span key={e} className="tag">{EQUIPMENT_NAMES[e]}</span>) : <span className="tag">Bodyweight</span>)}
         </div>
         {editable ? (

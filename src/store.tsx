@@ -23,19 +23,21 @@ export function defaultState(): AppState {
   };
   const hubby: Member = {
     id: 'm_hubby',
-    name: 'Hubby',
+    name: 'Ho',
     avatar: '🦴',
     role: 'both',
     goals: ['bone', 'muscle'],
-    place: 'gym',
-    equipment: [],
-    trainingDays: [1, 3, 5, 6],
+    // Ivy (2026-10-02): the same workout should work at home and at the gym; 3 days to keep it doable
+    place: 'both',
+    equipment: ['dumbbell', 'band'],
+    trainingDays: [1, 3, 5],
     level: 'beginner',
     cautions: { spineFragile: true, hipFragile: true, neckShoulderPain: false, kneeIssue: false, cleared: false },
     startDate: start,
     supervisorId: 'm_ivy',
     swaps: {},
   };
+  const nextYear = `${Number(start.slice(0, 4)) + 1}${start.slice(4)}`;
   return {
     version: 1,
     members: [ivy, hubby],
@@ -46,7 +48,11 @@ export function defaultState(): AppState {
     wishes: [],
     dexa: [],
     body: [],
-    milestones: [],
+    // Ivy's 1-year goal for Ho (2026-10-02): spine T and Z from -3; -2.8 earns $200, -2.5 a Switch 2
+    milestones: [
+      { id: 'ms_hubby_28', memberId: hubby.id, metric: 'spineScore', target: -2.8, reward: 200, startValue: -3, deadline: nextYear, title: 'Spine T- and Z-score reach -2.8' },
+      { id: 'ms_hubby_25', memberId: hubby.id, metric: 'spineScore', target: -2.5, reward: 0, prize: 'Nintendo Switch 2', startValue: -3, deadline: nextYear, title: 'Spine T- and Z-score reach -2.5' },
+    ],
     labs: [],
     daily: {},
     walks: [],
@@ -61,12 +67,27 @@ export function loadState(): AppState {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as AppState;
-      if (parsed.version === 1) return { ...defaultState(), ...parsed };
+      if (parsed.version === 1) return migrate({ ...defaultState(), ...parsed });
     }
   } catch {
     // fall back to defaults if stored data can't be read
   }
   return defaultState();
+}
+
+/** Bring older saved data up to date with later decisions */
+function migrate(s: AppState): AppState {
+  const ho = s.members.find((m) => m.id === 'm_hubby');
+  // Renamed Hubby → Ho; an untouched default gym profile becomes the home-and-gym setup
+  if (ho && ho.name === 'Hubby') {
+    ho.name = 'Ho';
+    if (ho.place === 'gym' && ho.equipment.length === 0) {
+      ho.place = 'both';
+      ho.equipment = ['dumbbell', 'band'];
+      if (ho.trainingDays.join() === '1,3,5,6') ho.trainingDays = [1, 3, 5];
+    }
+  }
+  return s;
 }
 
 type Updater = (draft: AppState) => void;

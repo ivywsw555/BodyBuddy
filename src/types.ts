@@ -1,6 +1,7 @@
 export type Role = 'trainee' | 'supervisor' | 'both';
 export type Goal = 'bone' | 'muscle' | 'posture' | 'fitness';
-export type Place = 'gym' | 'home';
+/** 'both' = home and gym: only moves that work with the home equipment, so the same workout runs anywhere */
+export type Place = 'gym' | 'home' | 'both';
 export type Equipment =
   | 'dumbbell'
   | 'band'
@@ -227,7 +228,8 @@ export interface BodyRecord {
   note?: string;
 }
 
-export type MilestoneMetric = 'spineBmdPct' | 'hipBmdPct' | 'muscleKg' | 'fatPct';
+/** *Score metrics are absolute targets: the lower of the T-score and Z-score must reach the target */
+export type MilestoneMetric = 'spineBmdPct' | 'hipBmdPct' | 'spineScore' | 'hipScore' | 'muscleKg' | 'fatPct';
 
 export interface Milestone {
   id: string;
@@ -238,6 +240,10 @@ export interface Milestone {
   reward: number;
   deadline: string;
   title: string;
+  /** Non-cash reward (e.g. "Nintendo Switch 2"); shown instead of the amount */
+  prize?: string;
+  /** Starting value for score goals when no DEXA has been entered yet */
+  startValue?: number;
   paidAt?: string;
 }
 
