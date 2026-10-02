@@ -1015,3 +1015,7 @@ details > summary {
   cursor: default;
   opacity: 0.7;
 }
+.chip:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

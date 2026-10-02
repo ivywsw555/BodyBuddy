@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import type { Cautions, Equipment, Goal, Member, Role } from '../types';
 import { ALL_EQUIPMENT, EQUIPMENT_NAMES, GOAL_NAMES } from '../lib/plan';
 import { today, uid, WEEKDAY_NAMES } from '../lib/date';
-import { defaultState, useStore } from '../store';
+import { defaultState, memberName, useMember, useStore } from '../store';
 
 const ROLE_NAMES: Record<Role, string> = {
   trainee: 'Trains',
@@ -143,6 +143,9 @@ function MemberEditor({ member }: { member: Member }) {
     });
   const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   const others = state.members.filter((m) => m.id !== member.id);
+  // Plan settings (days, level, start date, who supervises) belong to the supervisor once one is set
+  const viewer = useMember();
+  const locked = !!member.supervisorId && viewer?.id !== member.supervisorId;
 
   return (
     <details className="card" open={state.activeMemberId === member.id}>
@@ -175,6 +178,7 @@ function MemberEditor({ member }: { member: Member }) {
           Supervised by
           <select
             value={member.supervisorId ?? ''}
+            disabled={locked}
             onChange={(e) => edit((m) => void (m.supervisorId = e.target.value || undefined))}
           >
             <option value="">No supervisor</option>
@@ -235,10 +239,16 @@ function MemberEditor({ member }: { member: Member }) {
       )}
 
       <h4>Training days</h4>
+      {locked && (
+        <p className="muted small">
+          🔒 Training days, experience, start date and supervisor are set by {memberName(state, member.supervisorId)}. Switch to their profile to change them.
+        </p>
+      )}
       <div className="chips">
         {[1, 2, 3, 4, 5, 6, 0].map((d) => (
           <button
             key={d}
+            disabled={locked}
             className={`chip ${member.trainingDays.includes(d) ? 'active' : ''}`}
             onClick={() => edit((m) => void (m.trainingDays = toggle(m.trainingDays, d)))}
           >
@@ -250,14 +260,14 @@ function MemberEditor({ member }: { member: Member }) {
       <div className="form grid2">
         <label>
           Experience
-          <select value={member.level} onChange={(e) => edit((m) => void (m.level = e.target.value as Member['level']))}>
+          <select value={member.level} disabled={locked} onChange={(e) => edit((m) => void (m.level = e.target.value as Member['level']))}>
             <option value="beginner">Beginner</option>
             <option value="intermediate">Some experience</option>
           </select>
         </label>
         <label>
           Plan start date
-          <input type="date" value={member.startDate} onChange={(e) => edit((m) => void (m.startDate = e.target.value))} />
+          <input type="date" value={member.startDate} disabled={locked} onChange={(e) => edit((m) => void (m.startDate = e.target.value))} />
         </label>
       </div>
       {state.members.length > 1 && (
