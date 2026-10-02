@@ -220,10 +220,16 @@ function MemberEditor({ member }: { member: Member }) {
         <button className={`seg-btn ${member.place === 'home' ? 'active' : ''}`} onClick={() => edit((m) => void (m.place = 'home'))}>
           🏠 Home
         </button>
+        <button className={`seg-btn ${member.place === 'both' ? 'active' : ''}`} onClick={() => edit((m) => void (m.place = 'both'))}>
+          🔁 Both
+        </button>
       </div>
-      {member.place === 'home' && (
+      {member.place !== 'gym' && (
         <>
-          <p className="muted small">What equipment do you have at home? (none = bodyweight only)</p>
+          <p className="muted small">
+            What equipment do you have at home? (none = bodyweight only)
+            {member.place === 'both' ? ' The plan only uses this, so every workout works at home and at the gym.' : ''}
+          </p>
           <div className="chips">
             {ALL_EQUIPMENT.map((e: Equipment) => (
               <button

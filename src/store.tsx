@@ -27,8 +27,8 @@ export function defaultState(): AppState {
     avatar: '🦴',
     role: 'both',
     goals: ['bone', 'muscle'],
-    // Ivy (2026-10-02): workouts should work at home too; 3 days to keep it doable
-    place: 'home',
+    // Ivy (2026-10-02): the same workout should work at home and at the gym; 3 days to keep it doable
+    place: 'both',
     equipment: ['dumbbell', 'band'],
     trainingDays: [1, 3, 5],
     level: 'beginner',
@@ -78,11 +78,11 @@ export function loadState(): AppState {
 /** Bring older saved data up to date with later decisions */
 function migrate(s: AppState): AppState {
   const ho = s.members.find((m) => m.id === 'm_hubby');
-  // Renamed Hubby → Ho; an untouched default gym profile becomes the home setup
+  // Renamed Hubby → Ho; an untouched default gym profile becomes the home-and-gym setup
   if (ho && ho.name === 'Hubby') {
     ho.name = 'Ho';
     if (ho.place === 'gym' && ho.equipment.length === 0) {
-      ho.place = 'home';
+      ho.place = 'both';
       ho.equipment = ['dumbbell', 'band'];
       if (ho.trainingDays.join() === '1,3,5,6') ho.trainingDays = [1, 3, 5];
     }

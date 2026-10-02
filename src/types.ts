@@ -1,6 +1,7 @@
 export type Role = 'trainee' | 'supervisor' | 'both';
 export type Goal = 'bone' | 'muscle' | 'posture' | 'fitness';
-export type Place = 'gym' | 'home';
+/** 'both' = home and gym: only moves that work with the home equipment, so the same workout runs anywhere */
+export type Place = 'gym' | 'home' | 'both';
 export type Equipment =
   | 'dumbbell'
   | 'band'
