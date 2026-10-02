@@ -74,6 +74,26 @@ export interface Member {
   planNote?: string;
   planEditedBy?: string;
   planEditedAt?: string;
+  /** A fixed program written by the supervisor that replaces the generated plan until its end date; null = removed */
+  program?: Program | null;
+}
+
+export interface ProgramItem {
+  exerciseId: string;
+  sets: number;
+  reps: string;
+  restSec: number;
+  note?: string;
+}
+
+export interface Program {
+  name: string;
+  /** Last day (inclusive) the program replaces the generated plan */
+  until: string;
+  sessions: { key: string; title: string; focus: string; items: ProgramItem[] }[];
+  /** Replaces the daily routine while the program runs */
+  daily: { exerciseId: string; dose: string }[];
+  dailyNote?: string;
 }
 
 export interface PlanEdit {

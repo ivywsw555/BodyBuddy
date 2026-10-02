@@ -1,5 +1,5 @@
 import { EXERCISES, EXERCISE_MAP } from '../data/exercises';
-import type { Equipment, Exercise, Goal, Member, Pattern, Phase, PlannedExercise, Session } from '../types';
+import type { Equipment, Exercise, Goal, Member, Pattern, Phase, PlannedExercise, Program, Session } from '../types';
 import { daysBetween } from './date';
 import { fitToCap, HARD_MINUTES_CAP } from './load';
 
@@ -233,23 +233,39 @@ export function dose(
 /** Slot numbers at or above this are exercises the supervisor added */
 export const EXTRA_SLOT = 100;
 
+/** The supervisor's fixed program, if one is running on this date */
+export function activeProgram(m: Member, todayStr: string): Program | undefined {
+  return m.program && todayStr <= m.program.until ? m.program : undefined;
+}
+
+type SessionSpec = { key: string; title: string; focus: string; slots: { pattern: Pattern; base?: Exercise; prefer?: string; dose?: ReturnType<typeof dose> }[] };
+
 export function buildSessions(m: Member, todayStr: string): Session[] {
   const phase = currentPhase(m, todayStr);
   const lighter = !!m.lightenUntil && todayStr <= m.lightenUntil;
-  return templatesFor(m).map((t) => {
+  const program = activeProgram(m, todayStr);
+  const specs: SessionSpec[] = program
+    ? program.sessions.map((s) => ({
+        ...s,
+        slots: s.items
+          .filter((i) => EXERCISE_MAP[i.exerciseId])
+          .map((i) => ({ pattern: EXERCISE_MAP[i.exerciseId].pattern, base: EXERCISE_MAP[i.exerciseId], dose: { sets: i.sets, reps: i.reps, restSec: i.restSec, note: i.note } })),
+      }))
+    : templatesFor(m).map((t) => ({ ...t, slots: t.slots.map((spec) => ({ pattern: slotPattern(spec), prefer: typeof spec === 'string' ? undefined : spec.prefer })) }));
+  return specs.map((t) => {
     const used = new Set<string>();
     const items: PlannedExercise[] = [];
     t.slots.forEach((spec, slot) => {
-      const pattern = slotPattern(spec);
+      const pattern = spec.pattern;
       const swapId = m.swaps[`${t.key}-${slot}`];
       const swapped = swapId ? EXERCISE_MAP[swapId] : undefined;
       const ex =
         swapped && swapped.pattern === pattern && hasEquipment(swapped, m) && !isAvoided(swapped, m)
           ? swapped
-          : pick(pattern, m, phase, used, typeof spec === 'string' ? undefined : spec.prefer);
+          : (spec.base ?? pick(pattern, m, phase, used, spec.prefer));
       if (!ex) return;
       used.add(ex.id);
-      const d = dose(ex, m, phase);
+      const d = spec.dose && ex === spec.base ? { ...spec.dose } : dose(ex, m, phase);
       const edit = m.planEdits?.[`${t.key}-${slot}`];
       if (edit?.removed) return;
       if (edit?.sets) d.sets = edit.sets;

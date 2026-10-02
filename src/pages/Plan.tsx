@@ -100,7 +100,7 @@ export function PlanPage() {
         </div>
         {editable ? (
           <>
-            <div className="small">Training days (workouts A and B alternate):</div>
+            <div className="small">Training days (the workouts below take turns):</div>
             <div className="chips">
               {[1, 2, 3, 4, 5, 6, 0].map((d) => (
                 <button
@@ -119,10 +119,32 @@ export function PlanPage() {
           </>
         ) : (
           <p className="small m0">
-            Training days: {member.trainingDays.length ? [...member.trainingDays].sort().map((d) => WEEKDAY_NAMES[d]).join(', ') : 'not set'}. Workouts A and B alternate.
+            Training days: {member.trainingDays.length ? [...member.trainingDays].sort().map((d) => WEEKDAY_NAMES[d]).join(', ') : 'not set'}. The workouts below take turns.
           </p>
         )}
       </div>
+
+      {member.program && (
+        <div className="card card-accent">
+          <div className="row-between">
+            <h3 className="m0">📋 {member.program.name}</h3>
+            <span className="pill">{t <= member.program.until ? `until ${fmtDate(member.program.until)}` : 'finished'}</span>
+          </div>
+          <p className="small m0">
+            {t <= member.program.until
+              ? `This fixed program replaces the generated plan, including the daily moves (${member.program.dailyNote ?? ''}). After ${fmtDate(member.program.until)} the generated plan takes over at phase 2.`
+              : 'The program has finished, so the generated plan is back.'}
+          </p>
+          {editable && t <= member.program.until && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => confirm(`End ${member.program!.name} now and go back to the generated plan?`) && edit((m) => void (m.program = null))}
+            >
+              End this program early
+            </button>
+          )}
+        </div>
+      )}
 
       {(fragile || member.goals.includes('bone')) && (
         <div className="card">

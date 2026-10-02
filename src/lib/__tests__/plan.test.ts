@@ -4,7 +4,9 @@ import { EXERCISE_MAP } from '../../data/exercises';
 import { defaultState } from '../../store';
 import type { Member } from '../../types';
 
-const [ivy, hubby] = defaultState().members;
+const [ivy, hoDefault] = defaultState().members;
+// Generator rules are tested without Ho's fixed month-1 program
+const hubby = { ...hoDefault, program: null };
 
 function ids(m: Member, t = m.startDate) {
   return buildSessions(m, t).flatMap((s) => s.items.map((i) => i.exerciseId));

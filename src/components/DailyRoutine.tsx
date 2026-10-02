@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Member } from '../types';
 import { EXERCISE_MAP } from '../data/exercises';
+import { activeProgram } from '../lib/plan';
 import { dailyKey, dailyRoutine, dailyStreak, WEEKLY_WALK_GOAL, weekWalkMinutes, type Pillar } from '../lib/daily';
 import { today, uid } from '../lib/date';
 import { useStore } from '../store';
@@ -19,6 +20,7 @@ export function DailyCard({ member, mode = 'rest', skip }: { member: Member; mod
   const key = dailyKey(member.id, t);
   const done = new Set(state.daily[key] ?? []);
   const streak = dailyStreak(state, member, t);
+  const program = activeProgram(member, t);
   const doneN = items.filter((i) => done.has(i.exerciseId)).length;
   const pillars = [...new Set(items.map((i) => i.pillar))];
 
@@ -34,7 +36,7 @@ export function DailyCard({ member, mode = 'rest', skip }: { member: Member; mod
   return (
     <div className="card">
       <div className="row-between">
-        <h3 className="m0">{mode === 'warmup' ? '🔥 Warm-up: your daily moves' : mode === 'leftover' ? '☀️ Daily moves left' : `☀️ Daily 10 min · ${pillars.join(' & ')}`}</h3>
+        <h3 className="m0">{mode === 'warmup' ? '🔥 Warm-up: your daily moves' : mode === 'leftover' ? '☀️ Daily moves left' : program ? '☀️ Daily moves (morning & evening)' : `☀️ Daily 10 min · ${pillars.join(' & ')}`}</h3>
         <span className={`pill ${doneN >= items.length ? 'pill-ok' : ''}`}>
           {doneN}/{items.length}
         </span>
@@ -44,7 +46,7 @@ export function DailyCard({ member, mode = 'rest', skip }: { member: Member; mod
           {
             warmup: 'Start with 5 minutes of brisk walking or marching in place, then these. They count as today’s daily routine. ',
             leftover: 'These weren’t in today’s workout. Fit them in any time today to keep the streak. ',
-            rest: 'Rest day: just these 10 minutes today. ',
+            rest: program?.dailyNote ? `${program.dailyNote} ` : 'Rest day: just these 10 minutes today. ',
           }[mode]
         }
         {streak > 0 ? `🔥 ${streak}-day streak.` : 'Finish all of them to start a streak.'}

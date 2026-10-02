@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { AppState, Member } from './types';
 import { today } from './lib/date';
+import { hoMonthOne } from './data/programs';
 
 const KEY = 'bodybuddy.v1';
 
@@ -29,13 +30,14 @@ export function defaultState(): AppState {
     goals: ['bone', 'muscle'],
     // Ivy (2026-10-02): the same workout should work at home and at the gym; 3 days to keep it doable
     place: 'both',
-    equipment: ['dumbbell', 'band'],
+    equipment: ['dumbbell', 'band', 'bench'],
     trainingDays: [1, 3, 5],
     level: 'beginner',
     cautions: { spineFragile: true, hipFragile: true, neckShoulderPain: false, kneeIssue: false, cleared: false },
     startDate: start,
     supervisorId: 'm_ivy',
     swaps: {},
+    program: hoMonthOne(start),
   };
   const nextYear = `${Number(start.slice(0, 4)) + 1}${start.slice(4)}`;
   return {
@@ -86,6 +88,11 @@ function migrate(s: AppState): AppState {
       ho.equipment = ['dumbbell', 'band'];
       if (ho.trainingDays.join() === '1,3,5,6') ho.trainingDays = [1, 3, 5];
     }
+  }
+  // Ivy's month-1 program for Ho (2026-10-02); null means it was removed on purpose
+  if (ho && ho.program === undefined) {
+    ho.program = hoMonthOne(today());
+    if (!ho.equipment.includes('bench')) ho.equipment = [...ho.equipment, 'bench'];
   }
   return s;
 }

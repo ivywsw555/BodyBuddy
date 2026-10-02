@@ -9,6 +9,21 @@ import type { Exercise } from '../types';
 export const EXERCISES: Exercise[] = [
   // ───── Squat ─────
   {
+    id: 'bench_squat',
+    name: 'Bench Tap Squat',
+    zh: '凳子坐触深蹲',
+    pattern: 'squat',
+    equip: ['bench'],
+    tier: 1,
+    muscles: 'Quads, glutes; loads the hips',
+    tags: ['Bone', 'Muscle'],
+    unit: 'reps',
+    cues: ['Flat bench behind you; feet shoulder-width, toes turned out slightly', 'Arms crossed over the chest, no weight', 'Sit the hips back until the glutes just touch the bench, then stand straight up', 'Never relax or sit down fully on the bench'],
+    mistakes: ['Dropping onto the bench and losing tension', 'Rounding the back to stand up'],
+    img: 'Bodyweight_Squat',
+    videoQuery: 'box squat bodyweight touch and go',
+  },
+  {
     id: 'bodyweight_squat',
     name: 'Bodyweight Squat',
     zh: '徒手深蹲',
@@ -80,6 +95,20 @@ export const EXERCISES: Exercise[] = [
   },
 
   // ───── Hinge ─────
+  {
+    id: 'clamshell',
+    name: 'Clamshell',
+    zh: '侧卧蚌式开合',
+    pattern: 'hinge',
+    equip: [],
+    tier: 1,
+    muscles: 'Glute medius (side hip stability)',
+    tags: ['Muscle', 'Balance'],
+    unit: 'reps',
+    cues: ['Lie on your side with knees bent and feet together', 'Keep the feet touching and open the top knee like a clamshell', 'Pelvis stays still; don’t roll backwards', 'Lower slowly'],
+    mistakes: ['Rolling the pelvis back to lift higher', 'Rushing the reps'],
+    videoQuery: 'clamshell exercise proper form',
+  },
   {
     id: 'glute_bridge',
     name: 'Glute Bridge',
@@ -183,6 +212,20 @@ export const EXERCISES: Exercise[] = [
 
   // ───── Horizontal push ─────
   {
+    id: 'lying_triceps_ext',
+    name: 'Lying Dumbbell Triceps Extension',
+    zh: '平凳仰卧哑铃臂屈伸',
+    pattern: 'push_h',
+    equip: ['dumbbell', 'bench'],
+    tier: 1,
+    muscles: 'Triceps',
+    tags: ['Muscle'],
+    unit: 'reps',
+    cues: ['Lie on a flat bench, upper arms pointing straight up', 'Keep the upper arms still and bend only at the elbows', 'Lower the dumbbells beside the head, then straighten the arms', 'Light weight, slow and controlled'],
+    mistakes: ['Upper arms drifting back and forth', 'Arching the lower back'],
+    img: 'Dumbbell_Lying_Triceps_Extension',
+  },
+  {
     id: 'incline_pushup',
     name: 'Incline Push-Up',
     zh: '上斜俯卧撑',
@@ -255,6 +298,20 @@ export const EXERCISES: Exercise[] = [
 
   // ───── Vertical push (standing presses load the spine axially, good for bone) ─────
   {
+    id: 'seated_db_ohp',
+    name: 'Seated Dumbbell Shoulder Press (back supported)',
+    zh: '直角靠背哑铃推肩',
+    pattern: 'push_v',
+    equip: ['dumbbell', 'bench'],
+    tier: 1,
+    muscles: 'Shoulders, triceps',
+    tags: ['Muscle'],
+    unit: 'reps',
+    cues: ['Set the bench back to 80–85°', 'Head and whole back flat against the backrest', 'Press the dumbbells overhead, then lower to ear level', 'The backrest stops the spine from swaying'],
+    mistakes: ['Arching the lower back off the backrest', 'Pressing too heavy'],
+    img: 'Seated_Dumbbell_Press',
+  },
+  {
     id: 'band_ohp',
     name: 'Band Overhead Press',
     zh: '弹力带站姿推举',
@@ -298,6 +355,20 @@ export const EXERCISES: Exercise[] = [
   },
 
   // ───── Horizontal pull ─────
+  {
+    id: 'chest_supported_row',
+    name: 'Chest-Supported Incline Dumbbell Row',
+    zh: '上斜俯卧哑铃划船',
+    pattern: 'pull_h',
+    equip: ['dumbbell', 'bench'],
+    tier: 1,
+    muscles: 'Upper back, lats, rear delts',
+    tags: ['Muscle', 'Posture'],
+    unit: 'reps',
+    cues: ['Set the bench to a 30–45° incline and lie chest-down on it', 'Let light dumbbells hang straight down', 'Pull the elbows back and out; squeeze the shoulder blades together for 2 s at the top', 'Lower slowly over 3 s'],
+    mistakes: ['Lifting the chest off the bench', 'Shrugging the shoulders up'],
+    img: 'Dumbbell_Incline_Row',
+  },
   {
     id: 'band_row',
     name: 'Band Seated Row',
@@ -672,6 +743,19 @@ export const EXERCISES: Exercise[] = [
 
   // ───── Shoulder-blade stability ─────
   {
+    id: 'prone_w_raise',
+    name: 'Prone W-Raise on Bench',
+    zh: '俯卧凳上W姿态肩胛强化',
+    pattern: 'scap',
+    equip: ['bench'],
+    tier: 1,
+    muscles: 'Lower traps, rhomboids; pulls the shoulder blades flat',
+    tags: ['Posture'],
+    unit: 'reps',
+    cues: ['Chest on a flat or 30° bench, no weights', 'Bend the elbows into a W shape', 'Using only the upper back, lift the elbows up and back', 'Feel the shoulder blades flatten onto the ribs; lower slowly'],
+    mistakes: ['Shrugging toward the ears', 'Lifting the chest off the bench'],
+  },
+  {
     id: 'scap_squeeze',
     name: 'Standing Shoulder-Blade Squeeze',
     zh: '站立肩胛骨后缩',
@@ -771,6 +855,19 @@ export const EXERCISES: Exercise[] = [
   },
 
   // ───── Thoracic spine / mobility ─────
+  {
+    id: 'door_pec_stretch',
+    name: 'Doorway Pec Minor Stretch',
+    zh: '门框胸小肌主动拉伸',
+    pattern: 'tspine',
+    equip: [],
+    tier: 1,
+    muscles: 'Pec minor and chest; opens the front of the shoulders',
+    tags: ['Posture'],
+    unit: 'sec',
+    cues: ['Elbow bent 90°, forearm against the door frame', 'Step slightly forward and turn the body away from that arm', 'Feel the stretch below the collarbone', 'Keep the ribs down; don’t push the belly out or arch the lower back'],
+    mistakes: ['Arching the lower back to go further', 'Shrugging the shoulder'],
+  },
   {
     id: 'tspine_extension',
     name: 'Thoracic Extension',
